@@ -20,6 +20,7 @@ import {
   Bot,
   Zap,
   Star,
+  Gamepad2,
 } from 'lucide-react';
 
 const features = [
@@ -70,6 +71,14 @@ const features = [
     accent: 'from-cyan-500/20 to-blue-500/20',
     iconColor: 'text-cyan-500',
     link: '/chat',
+  },
+  {
+    icon: Gamepad2,
+    title: 'Learn by Playing',
+    description: 'Master coding through interactive games for HTML, CSS, JS, Python & more',
+    accent: 'from-rose-500/20 to-pink-500/20',
+    iconColor: 'text-rose-500',
+    link: '/games',
   },
 ];
 
@@ -219,18 +228,18 @@ export default function Landing() {
         <div className="container">
           <div className="max-w-3xl mb-16">
             <Badge variant="outline" className="mb-4">All Features</Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-              Six powerful tools.
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+              Seven powerful tools.
               <br />
               <span className="text-muted-foreground">One mission: Get you hired.</span>
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base lg:text-lg text-muted-foreground">
               Every feature designed to give you an unfair advantage.
               No fluff. No motivational garbage. Just actionable intelligence.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (

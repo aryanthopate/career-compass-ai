@@ -34,6 +34,7 @@ import {
   Shield,
   Settings,
   HelpCircle,
+  Gamepad2,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -77,6 +78,14 @@ const productItems = [
     description: 'Get your overall career readiness score',
     color: 'text-violet-500',
     bg: 'bg-violet-500/10',
+  },
+  { 
+    path: '/games', 
+    label: 'Learn by Playing', 
+    icon: Gamepad2,
+    description: 'Master coding through fun interactive games',
+    color: 'text-cyan-500',
+    bg: 'bg-cyan-500/10',
   },
 ];
 

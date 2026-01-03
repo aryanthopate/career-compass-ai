@@ -17,11 +17,14 @@ import SkillGap from "./pages/SkillGap";
 import Interview from "./pages/Interview";
 import CareerVerdict from "./pages/CareerVerdict";
 import Chat from "./pages/Chat";
+import Games from "./pages/Games";
+import GamePlay from "./pages/GamePlay";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminGames from "./pages/admin/AdminGames";
 import AdminSettings from "./pages/admin/AdminSettings";
 import NotFound from "./pages/NotFound";
 
@@ -70,9 +73,12 @@ function AppContent() {
         <Route path="/interview" element={<ProtectedRoute><Interview /></ProtectedRoute>} />
         <Route path="/career-verdict" element={<ProtectedRoute><CareerVerdict /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/games" element={<ProtectedRoute><Games /></ProtectedRoute>} />
+        <Route path="/games/:language" element={<ProtectedRoute><GamePlay /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminOverview />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="games" element={<AdminGames />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
         <Route path="*" element={<NotFound />} />

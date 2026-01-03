@@ -42,6 +42,10 @@ import {
   Image,
   X,
   Upload,
+  Gamepad2,
+  Trophy,
+  Flame,
+  Star,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -67,6 +71,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [gameStats, setGameStats] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -82,11 +87,22 @@ export default function Profile() {
   useEffect(() => {
     if (user) {
       loadProfile();
+      loadGameStats();
       // Load banner from localStorage
       const savedBanner = localStorage.getItem(`banner_${user.id}`);
       if (savedBanner) setBannerUrl(savedBanner);
     }
   }, [user]);
+
+  const loadGameStats = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_game_stats')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+    if (data) setGameStats(data);
+  };
 
   const loadProfile = async () => {
     if (!user) return;
@@ -181,8 +197,8 @@ export default function Profile() {
   const stats = [
     { label: 'Resumes', value: resumes.length, icon: FileText, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     { label: 'Analyses', value: analyses.length, icon: BarChart3, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: 'Skill Checks', value: skillGaps.length, icon: Target, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-    { label: 'Interviews', value: interviewAttempts.length, icon: MessageSquare, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+    { label: 'Games XP', value: gameStats?.total_xp || 0, icon: Gamepad2, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+    { label: 'Streak', value: gameStats?.current_streak || 0, icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
   ];
 
   if (authLoading || loading) {
