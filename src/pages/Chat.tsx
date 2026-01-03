@@ -747,10 +747,10 @@ function ConversationItem({
       onClick={() => !isEditing && onSelect()}
     >
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-        isActive ? 'bg-primary/20' : 'bg-secondary'
+        isActive ? 'bg-primary/20' : conv.pinned ? 'bg-yellow-500/10' : 'bg-secondary'
       }`}>
         {conv.pinned ? (
-          <Star className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-yellow-500'}`} />
+          <span className={`text-[10px] font-bold uppercase ${isActive ? 'text-primary' : 'text-yellow-500'}`}>Pin</span>
         ) : (
           <MessageSquare className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
         )}
