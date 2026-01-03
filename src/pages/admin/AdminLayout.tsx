@@ -11,11 +11,13 @@ import {
   ArrowLeft,
   Loader2,
   Gamepad2,
+  Mail,
 } from 'lucide-react';
 
 const adminNavItems = [
   { path: '/admin', label: 'Overview', icon: BarChart3 },
   { path: '/admin/users', label: 'Users', icon: Users },
+  { path: '/admin/contacts', label: 'Contacts', icon: Mail },
   { path: '/admin/games', label: 'Games', icon: Gamepad2 },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];

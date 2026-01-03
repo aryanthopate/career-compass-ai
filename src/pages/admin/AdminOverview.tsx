@@ -13,6 +13,7 @@ import {
   ArrowUp,
   Loader2,
   Calendar,
+  Mail,
 } from 'lucide-react';
 
 interface Stats {
@@ -21,6 +22,8 @@ interface Stats {
   totalAnalyses: number;
   totalInterviews: number;
   totalChats: number;
+  totalContacts: number;
+  unreadContacts: number;
 }
 
 interface RecentActivity {
@@ -35,18 +38,22 @@ export default function AdminOverview() {
     totalAnalyses: 0,
     totalInterviews: 0,
     totalChats: 0,
+    totalContacts: 0,
+    unreadContacts: 0,
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
-      const [users, resumes, analyses, interviews, chats] = await Promise.all([
+      const [users, resumes, analyses, interviews, chats, contacts, unreadContacts] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('resumes').select('id', { count: 'exact', head: true }),
         supabase.from('resume_analyses').select('id', { count: 'exact', head: true }),
         supabase.from('interview_attempts').select('id', { count: 'exact', head: true }),
         supabase.from('chat_conversations').select('id', { count: 'exact', head: true }),
+        supabase.from('contacts').select('id', { count: 'exact', head: true }),
+        supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('is_read', false),
       ]);
 
       setStats({
@@ -55,6 +62,8 @@ export default function AdminOverview() {
         totalAnalyses: analyses.count || 0,
         totalInterviews: interviews.count || 0,
         totalChats: chats.count || 0,
+        totalContacts: contacts.count || 0,
+        unreadContacts: unreadContacts.count || 0,
       });
 
       // Fetch recent activity
@@ -87,6 +96,7 @@ export default function AdminOverview() {
     { label: 'Analyses Run', value: stats.totalAnalyses, icon: Target, color: 'text-orange-500', bg: 'bg-orange-500/10', change: '+15%' },
     { label: 'Interview Sessions', value: stats.totalInterviews, icon: MessageSquare, color: 'text-pink-500', bg: 'bg-pink-500/10', change: '+23%' },
     { label: 'AI Conversations', value: stats.totalChats, icon: TrendingUp, color: 'text-violet-500', bg: 'bg-violet-500/10', change: '+31%' },
+    { label: 'Contact Messages', value: stats.totalContacts, icon: Mail, color: 'text-cyan-500', bg: 'bg-cyan-500/10', change: stats.unreadContacts > 0 ? `${stats.unreadContacts} new` : '0 new' },
   ];
 
   const getActivityLabel = (type: string) => {
