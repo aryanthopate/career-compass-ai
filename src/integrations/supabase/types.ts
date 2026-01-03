@@ -118,6 +118,143 @@ export type Database = {
           },
         ]
       }
+      game_achievements: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+          xp_reward?: number
+        }
+        Relationships: []
+      }
+      game_scores: {
+        Row: {
+          attempts: number
+          code_submitted: string | null
+          completed: boolean
+          created_at: string
+          game_id: string
+          id: string
+          score: number
+          time_taken_seconds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_submitted?: string | null
+          completed?: boolean
+          created_at?: string
+          game_id: string
+          id?: string
+          score?: number
+          time_taken_seconds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_submitted?: string | null
+          completed?: boolean
+          created_at?: string
+          game_id?: string
+          id?: string
+          score?: number
+          time_taken_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_scores_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          code_template: string | null
+          created_at: string
+          description: string | null
+          difficulty: Database["public"]["Enums"]["difficulty_level"]
+          expected_output: string | null
+          hints: string[] | null
+          id: string
+          image_url: string | null
+          instructions: string | null
+          is_active: boolean
+          language: Database["public"]["Enums"]["game_language"]
+          order_index: number
+          time_limit_seconds: number | null
+          title: string
+          updated_at: string
+          xp_reward: number
+        }
+        Insert: {
+          code_template?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty?: Database["public"]["Enums"]["difficulty_level"]
+          expected_output?: string | null
+          hints?: string[] | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          is_active?: boolean
+          language: Database["public"]["Enums"]["game_language"]
+          order_index?: number
+          time_limit_seconds?: number | null
+          title: string
+          updated_at?: string
+          xp_reward?: number
+        }
+        Update: {
+          code_template?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty?: Database["public"]["Enums"]["difficulty_level"]
+          expected_output?: string | null
+          hints?: string[] | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          is_active?: boolean
+          language?: Database["public"]["Enums"]["game_language"]
+          order_index?: number
+          time_limit_seconds?: number | null
+          title?: string
+          updated_at?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       interview_attempts: {
         Row: {
           created_at: string
@@ -336,6 +473,89 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "game_achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_game_stats: {
+        Row: {
+          created_at: string
+          css_level: number
+          current_streak: number
+          games_completed: number
+          html_level: number
+          id: string
+          javascript_level: number
+          last_played_at: string | null
+          longest_streak: number
+          python_level: number
+          rust_level: number
+          total_xp: number
+          typescript_level: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          css_level?: number
+          current_streak?: number
+          games_completed?: number
+          html_level?: number
+          id?: string
+          javascript_level?: number
+          last_played_at?: string | null
+          longest_streak?: number
+          python_level?: number
+          rust_level?: number
+          total_xp?: number
+          typescript_level?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          css_level?: number
+          current_streak?: number
+          games_completed?: number
+          html_level?: number
+          id?: string
+          javascript_level?: number
+          last_played_at?: string | null
+          longest_streak?: number
+          python_level?: number
+          rust_level?: number
+          total_xp?: number
+          typescript_level?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -372,6 +592,19 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      difficulty_level:
+        | "beginner"
+        | "intermediate"
+        | "advanced"
+        | "expert"
+        | "master"
+      game_language:
+        | "html"
+        | "css"
+        | "javascript"
+        | "typescript"
+        | "python"
+        | "rust"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -500,6 +733,21 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      difficulty_level: [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "expert",
+        "master",
+      ],
+      game_language: [
+        "html",
+        "css",
+        "javascript",
+        "typescript",
+        "python",
+        "rust",
+      ],
     },
   },
 } as const
