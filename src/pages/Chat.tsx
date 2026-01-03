@@ -75,6 +75,7 @@ export default function Chat() {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -85,9 +86,46 @@ export default function Chat() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const { messages, isLoading, error, sendMessage, clearMessages, setMessages } = useChatStream();
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + N: New chat
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        createNewConversation();
+      }
+      // Ctrl/Cmd + K: Focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSidebarOpen(true);
+        setTimeout(() => searchInputRef.current?.focus(), 100);
+      }
+      // Ctrl/Cmd + /: Toggle shortcuts
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setShortcutsOpen(prev => !prev);
+      }
+      // Ctrl/Cmd + B: Toggle sidebar
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        setSidebarOpen(prev => !prev);
+      }
+      // Escape: Close modals
+      if (e.key === 'Escape') {
+        setSettingsOpen(false);
+        setShortcutsOpen(false);
+        setDeleteConfirmId(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -304,7 +342,8 @@ export default function Chat() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search conversations..."
+                ref={searchInputRef}
+                placeholder="Search... (Ctrl+K)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 bg-background/50"
@@ -442,13 +481,18 @@ export default function Chat() {
 
           {/* Sidebar Footer */}
           <div className="p-3 border-t border-border flex-shrink-0 space-y-1">
-            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={() => setSettingsOpen(true)}>
-              <Settings className="w-4 h-4" />
-              Settings
+            <Button variant="ghost" size="sm" className="w-full justify-between text-muted-foreground" onClick={() => setSettingsOpen(true)}>
+              <span className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Settings
+              </span>
             </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground">
-              <Keyboard className="w-4 h-4" />
-              Shortcuts
+            <Button variant="ghost" size="sm" className="w-full justify-between text-muted-foreground" onClick={() => setShortcutsOpen(true)}>
+              <span className="flex items-center gap-2">
+                <Keyboard className="w-4 h-4" />
+                Shortcuts
+              </span>
+              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded">Ctrl+/</kbd>
             </Button>
             <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground">
               <HelpCircle className="w-4 h-4" />
@@ -612,6 +656,50 @@ export default function Chat() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSettingsOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shortcuts Dialog */}
+      <Dialog open={shortcutsOpen} onOpenChange={setShortcutsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Keyboard className="w-5 h-5" />
+              Keyboard Shortcuts
+            </DialogTitle>
+            <DialogDescription>
+              Quick actions to speed up your workflow
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {[
+              { keys: ['Ctrl', 'N'], action: 'New conversation', icon: Plus },
+              { keys: ['Ctrl', 'K'], action: 'Search conversations', icon: Search },
+              { keys: ['Ctrl', 'B'], action: 'Toggle sidebar', icon: PanelLeft },
+              { keys: ['Ctrl', '/'], action: 'Show shortcuts', icon: Keyboard },
+              { keys: ['Esc'], action: 'Close dialogs', icon: X },
+            ].map((shortcut, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                <div className="flex items-center gap-3">
+                  <shortcut.icon className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">{shortcut.action}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {shortcut.keys.map((key, j) => (
+                    <span key={j}>
+                      <kbd className="px-2 py-1 text-xs font-mono bg-background border border-border rounded shadow-sm">
+                        {key}
+                      </kbd>
+                      {j < shortcut.keys.length - 1 && <span className="mx-1 text-muted-foreground">+</span>}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShortcutsOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

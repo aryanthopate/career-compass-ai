@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { useResume } from '@/lib/ResumeContext';
@@ -7,11 +7,18 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   User,
   Mail,
@@ -23,18 +30,18 @@ import {
   Target,
   MessageSquare,
   Compass,
-  Calendar,
   TrendingUp,
-  Award,
   Briefcase,
   GraduationCap,
   Code,
-  Star,
   ChevronRight,
   Edit3,
   CheckCircle2,
   Clock,
   Zap,
+  Image,
+  X,
+  Upload,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -52,11 +59,14 @@ export default function Profile() {
   const { user, loading: authLoading } = useAuth();
   const { resumes, analyses, skillGaps, interviewAttempts, careerVerdict } = useResume();
   const navigate = useNavigate();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
   
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -72,6 +82,9 @@ export default function Profile() {
   useEffect(() => {
     if (user) {
       loadProfile();
+      // Load banner from localStorage
+      const savedBanner = localStorage.getItem(`banner_${user.id}`);
+      if (savedBanner) setBannerUrl(savedBanner);
     }
   }, [user]);
 
@@ -113,10 +126,43 @@ export default function Profile() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Profile saved', description: 'Your profile has been updated.' });
-      setEditing(false);
+      setEditDialogOpen(false);
       loadProfile();
     }
     setSaving(false);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, avatar_url: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && user) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const url = reader.result as string;
+        setBannerUrl(url);
+        localStorage.setItem(`banner_${user.id}`, url);
+        toast({ title: 'Banner updated', description: 'Your banner has been changed.' });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeBanner = () => {
+    if (user) {
+      setBannerUrl(null);
+      localStorage.removeItem(`banner_${user.id}`);
+      toast({ title: 'Banner removed' });
+    }
   };
 
   const getInitials = (name: string | null, email: string | null) => {
@@ -131,37 +177,12 @@ export default function Profile() {
 
   const latestResume = resumes[0];
   const latestAnalysis = analyses[analyses.length - 1];
-  const latestSkillGap = skillGaps[skillGaps.length - 1];
 
   const stats = [
-    { 
-      label: 'Resumes', 
-      value: resumes.length, 
-      icon: FileText, 
-      color: 'text-blue-500',
-      bg: 'bg-blue-500/10' 
-    },
-    { 
-      label: 'Analyses', 
-      value: analyses.length, 
-      icon: BarChart3, 
-      color: 'text-emerald-500',
-      bg: 'bg-emerald-500/10' 
-    },
-    { 
-      label: 'Skill Checks', 
-      value: skillGaps.length, 
-      icon: Target, 
-      color: 'text-orange-500',
-      bg: 'bg-orange-500/10' 
-    },
-    { 
-      label: 'Interviews', 
-      value: interviewAttempts.length, 
-      icon: MessageSquare, 
-      color: 'text-pink-500',
-      bg: 'bg-pink-500/10' 
-    },
+    { label: 'Resumes', value: resumes.length, icon: FileText, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Analyses', value: analyses.length, icon: BarChart3, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Skill Checks', value: skillGaps.length, icon: Target, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { label: 'Interviews', value: interviewAttempts.length, icon: MessageSquare, color: 'text-pink-500', bg: 'bg-pink-500/10' },
   ];
 
   if (authLoading || loading) {
@@ -179,57 +200,95 @@ export default function Profile() {
       <main className="container py-8 max-w-6xl">
         {/* Profile Header */}
         <div className="relative mb-8">
-          {/* Cover */}
-          <div className="h-48 rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-accent overflow-hidden">
-            <div className="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLThoLTJ2LTRoMnY0em0tOCAwaC0ydi00aDJ2NHptLTggMGgtMnYtNGgydjR6bTggMTZoLTJ2LTRoMnY0em0tOCAwaC0ydi00aDJ2NHptLTggMGgtMnYtNGgydjR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
+          {/* Cover Banner */}
+          <div className="relative h-56 rounded-2xl overflow-hidden group">
+            {bannerUrl ? (
+              <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-r from-primary via-primary/80 to-accent">
+                <div className="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLThoLTJ2LTRoMnY0em0tOCAwaC0ydi00aDJ2NHptLTggMGgtMnYtNGgydjR6bTggMTZoLTJ2LTRoMnY0em0tOCAwaC0ydi00aDJ2NHptLTggMGgtMnYtNGgydjR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
+              </div>
+            )}
+            {/* Banner Edit Controls */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+              <input
+                ref={bannerInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBannerChange}
+                className="hidden"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => bannerInputRef.current?.click()}
+                className="gap-2"
+              >
+                <Image className="w-4 h-4" />
+                Change Banner
+              </Button>
+              {bannerUrl && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={removeBanner}
+                  className="gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Remove
+                </Button>
+              )}
+            </div>
           </div>
           
-          {/* Avatar & Name */}
-          <div className="absolute -bottom-12 left-8 flex items-end gap-6">
+          {/* Avatar & Profile Info */}
+          <div className="absolute -bottom-16 left-8 flex items-end gap-6">
             <div className="relative">
-              <div className="w-28 h-28 rounded-2xl bg-card border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
+              <div className="w-32 h-32 rounded-2xl bg-card border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
                 {formData.avatar_url ? (
                   <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-3xl font-bold text-primary">
+                  <span className="text-4xl font-bold text-primary">
                     {getInitials(formData.full_name, profile?.email)}
                   </span>
                 )}
               </div>
               <button 
-                onClick={() => setEditing(true)}
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
+                onClick={() => setEditDialogOpen(true)}
+                className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="pb-2">
-              <h1 className="text-2xl font-bold">
+            <div className="pb-4">
+              <h1 className="text-3xl font-bold">
                 {formData.full_name || 'Set your name'}
               </h1>
-              <p className="text-muted-foreground flex items-center gap-2">
+              <p className="text-muted-foreground flex items-center gap-2 mt-1">
                 <Mail className="w-4 h-4" />
-                {profile?.email}
+                {profile?.email || user?.email}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
               </p>
             </div>
           </div>
           
-          {/* Edit Button */}
+          {/* Edit Profile Button */}
           <div className="absolute top-4 right-4">
             <Button 
-              variant={editing ? 'default' : 'secondary'}
-              onClick={() => setEditing(!editing)}
-              className="gap-2"
+              onClick={() => setEditDialogOpen(true)}
+              className="gap-2 shadow-lg"
             >
               <Edit3 className="w-4 h-4" />
-              {editing ? 'Cancel' : 'Edit Profile'}
+              Edit Profile
             </Button>
           </div>
         </div>
         
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 mb-8">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -253,10 +312,6 @@ export default function Profile() {
             <TabsTrigger value="overview" className="gap-2">
               <TrendingUp className="w-4 h-4" />
               Overview
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <User className="w-4 h-4" />
-              Settings
             </TabsTrigger>
             <TabsTrigger value="data" className="gap-2">
               <FileText className="w-4 h-4" />
@@ -388,7 +443,7 @@ export default function Profile() {
                           ATS Score: {latestAnalysis.atsScore}%
                         </p>
                         <div className="flex gap-2 mt-2">
-                          <Badge variant="outline" className="text-score-good">
+                          <Badge variant="outline" className="text-emerald-500">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             {latestAnalysis.strengthAreas.length} Strengths
                           </Badge>
@@ -408,7 +463,7 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Recent Activity */}
+            {/* Quick Actions */}
             <Card className="glass-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -439,187 +494,170 @@ export default function Profile() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>Profile Settings</CardTitle>
-                <CardDescription>Manage your account information</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      placeholder="Enter your full name"
-                      disabled={!editing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      value={profile?.email || ''}
-                      disabled
-                      className="bg-muted"
-                    />
-                    <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="avatarUrl">Avatar URL</Label>
-                  <Input
-                    id="avatarUrl"
-                    value={formData.avatar_url}
-                    onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                    placeholder="https://example.com/avatar.jpg"
-                    disabled={!editing}
-                  />
-                </div>
-
-                {editing && (
-                  <div className="flex gap-3 pt-4">
-                    <Button onClick={saveProfile} disabled={saving}>
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                      Save Changes
-                    </Button>
-                    <Button variant="outline" onClick={() => setEditing(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>Account Info</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b border-border">
-                  <span className="text-muted-foreground">User ID</span>
-                  <code className="text-xs bg-muted px-2 py-1 rounded">{user?.id?.slice(0, 8)}...</code>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b border-border">
-                  <span className="text-muted-foreground">Member Since</span>
-                  <span>{profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}</span>
-                </div>
-                <div className="flex items-center justify-between py-3">
-                  <span className="text-muted-foreground">Last Updated</span>
-                  <span>{profile?.updated_at ? new Date(profile.updated_at).toLocaleDateString() : 'N/A'}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="data" className="space-y-6">
-            {/* All Resumes */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  All Resumes ({resumes.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {resumes.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No resumes created yet</p>
-                ) : (
-                  <div className="space-y-3">
-                    {resumes.map((resume) => (
-                      <div key={resume.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-primary" />
+            <div className="grid gap-6">
+              {/* Resume History */}
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    Resume History
+                  </CardTitle>
+                  <CardDescription>All your saved resume versions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {resumes.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No resumes yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {resumes.map((resume, index) => (
+                        <div key={resume.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <FileText className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{resume.name || `Resume v${resume.version}`}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(resume.updatedAt).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{resume.name || 'Untitled Resume'}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Version {resume.version} • {resume.skills?.length || 0} skills • {resume.experience?.length || 0} experiences
-                            </p>
-                          </div>
+                          <Badge variant="outline">v{resume.version}</Badge>
                         </div>
-                        <Badge variant="outline">
-                          {new Date(resume.updatedAt).toLocaleDateString()}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* All Analyses */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  All Analyses ({analyses.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {analyses.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No analyses performed yet</p>
-                ) : (
-                  <div className="space-y-3">
-                    {analyses.map((analysis, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                            <span className="font-bold text-emerald-500">{analysis.score}</span>
+              {/* Analysis History */}
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-emerald-500" />
+                    Analysis History
+                  </CardTitle>
+                  <CardDescription>Your resume analysis results</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {analyses.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No analyses yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {analyses.map((analysis, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                              <span className="text-sm font-bold text-emerald-500">{analysis.score}</span>
+                            </div>
+                            <div>
+                              <p className="font-medium">Resume Analysis</p>
+                              <p className="text-sm text-muted-foreground">ATS: {analysis.atsScore}%</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">Resume Analysis #{index + 1}</p>
-                            <p className="text-sm text-muted-foreground">
-                              ATS: {analysis.atsScore}% • {analysis.strengthAreas.length} strengths • {analysis.weaknesses.length} issues
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Skill Gaps */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5" />
-                  Skill Gap Analyses ({skillGaps.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {skillGaps.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No skill gap analyses yet</p>
-                ) : (
-                  <div className="space-y-3">
-                    {skillGaps.map((gap, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                            <span className="font-bold text-orange-500">{gap.readinessScore}%</span>
-                          </div>
-                          <div>
-                            <p className="font-medium">{gap.targetRole}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {gap.experienceLevel} • {gap.missingSkills.length} skills to learn
-                            </p>
+                          <div className="flex gap-2">
+                            <Badge variant="outline" className="text-emerald-500">{analysis.strengthAreas.length} strong</Badge>
+                            <Badge variant="outline" className="text-destructive">{analysis.weaknesses.length} weak</Badge>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Edit Profile
+            </DialogTitle>
+            <DialogDescription>
+              Update your profile information
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Avatar Upload */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-2xl bg-muted border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden">
+                  {formData.avatar_url ? (
+                    <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-muted-foreground" />
+                  )}
+                </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => avatarInputRef.current?.click()}
+                className="gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Upload Photo
+              </Button>
+            </div>
+            
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={formData.full_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                placeholder="Enter your full name"
+              />
+            </div>
+            
+            {/* Email (read-only) */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                value={profile?.email || user?.email || ''}
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            </div>
+            
+            {/* Avatar URL (optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="avatar-url">Avatar URL (optional)</Label>
+              <Input
+                id="avatar-url"
+                value={formData.avatar_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, avatar_url: e.target.value }))}
+                placeholder="https://example.com/avatar.jpg"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={saveProfile} disabled={saving} className="gap-2">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
