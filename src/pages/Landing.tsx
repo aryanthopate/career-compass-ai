@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
+import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { useTheme } from '@/lib/ThemeContext';
+import { Badge } from '@/components/ui/badge';
 import {
   FileText,
   BarChart3,
@@ -12,12 +13,13 @@ import {
   Quote,
   ArrowUpRight,
   Play,
-  Moon,
-  Sun,
   CheckCircle2,
   Users,
   TrendingUp,
   Shield,
+  Bot,
+  Zap,
+  Star,
 } from 'lucide-react';
 
 const features = [
@@ -27,6 +29,7 @@ const features = [
     description: 'Craft professional resumes with AI-powered suggestions for each section',
     accent: 'from-blue-500/20 to-indigo-500/20',
     iconColor: 'text-blue-500',
+    link: '/resume-builder',
   },
   {
     icon: BarChart3,
@@ -34,6 +37,7 @@ const features = [
     description: 'Get brutally honest feedback and ATS compatibility scores',
     accent: 'from-emerald-500/20 to-teal-500/20',
     iconColor: 'text-emerald-500',
+    link: '/resume-analysis',
   },
   {
     icon: Target,
@@ -41,6 +45,7 @@ const features = [
     description: 'Identify exactly what skills you need for your target role',
     accent: 'from-orange-500/20 to-amber-500/20',
     iconColor: 'text-orange-500',
+    link: '/skill-gap',
   },
   {
     icon: MessageSquare,
@@ -48,6 +53,7 @@ const features = [
     description: 'Practice with AI interviewer that gives real-time feedback',
     accent: 'from-pink-500/20 to-rose-500/20',
     iconColor: 'text-pink-500',
+    link: '/interview',
   },
   {
     icon: Compass,
@@ -55,6 +61,15 @@ const features = [
     description: 'Your complete hiring probability dashboard',
     accent: 'from-violet-500/20 to-purple-500/20',
     iconColor: 'text-violet-500',
+    link: '/career-verdict',
+  },
+  {
+    icon: Bot,
+    title: 'AI Career Coach',
+    description: 'Chat with AI for personalized career guidance anytime',
+    accent: 'from-cyan-500/20 to-blue-500/20',
+    iconColor: 'text-cyan-500',
+    link: '/chat',
   },
 ];
 
@@ -69,16 +84,19 @@ const testimonials = [
     quote: "Finally, career advice that doesn't sugarcoat reality. This tool told me exactly why I wasn't getting callbacks.",
     author: 'Priya S.',
     role: 'Software Engineer @ Google',
+    rating: 5,
   },
   {
     quote: "The interview simulator was brutal — in the best way. I walked into my actual interview feeling prepared.",
     author: 'Marcus J.',
     role: 'ML Engineer @ Meta',
+    rating: 5,
   },
   {
     quote: "The skill gap analysis showed me exactly what to learn. Got my first developer job 3 months later.",
     author: 'Sarah K.',
     role: 'Frontend Developer @ Stripe',
+    rating: 5,
   },
 ];
 
@@ -92,30 +110,9 @@ const benefits = [
 ];
 
 export default function Landing() {
-  const { theme, toggleTheme } = useTheme();
-
   return (
     <div className="min-h-screen bg-background overflow-hidden">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
-              <Compass className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg">Career Reality</span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
-              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </Button>
-            <Link to="/auth">
-              <Button className="shadow-sm">Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Header />
 
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center">
@@ -221,8 +218,9 @@ export default function Landing() {
       <section className="py-24 lg:py-32">
         <div className="container">
           <div className="max-w-3xl mb-16">
+            <Badge variant="outline" className="mb-4">All Features</Badge>
             <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-              Five powerful tools.
+              Six powerful tools.
               <br />
               <span className="text-muted-foreground">One mission: Get you hired.</span>
             </h2>
@@ -238,7 +236,7 @@ export default function Landing() {
               return (
                 <Link
                   key={feature.title}
-                  to="/auth"
+                  to={feature.link}
                   className="group block"
                 >
                   <div
@@ -272,6 +270,7 @@ export default function Landing() {
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
+              <Badge variant="outline" className="mb-4">Why Choose Us</Badge>
               <h2 className="text-4xl sm:text-5xl font-bold mb-6">
                 Everything you need.
                 <br />
@@ -308,7 +307,7 @@ export default function Landing() {
               <div className="relative glass-card p-8 rounded-3xl">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-6 rounded-2xl bg-background/50 text-center">
-                    <div className="text-4xl font-bold gradient-text mb-1">5</div>
+                    <div className="text-4xl font-bold gradient-text mb-1">6</div>
                     <div className="text-sm text-muted-foreground">Powerful Tools</div>
                   </div>
                   <div className="p-6 rounded-2xl bg-background/50 text-center">
@@ -334,6 +333,7 @@ export default function Landing() {
       <section className="py-24 lg:py-32">
         <div className="container">
           <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">Testimonials</Badge>
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               Real feedback from real people
             </h2>
@@ -349,10 +349,22 @@ export default function Landing() {
                 className="glass-card p-8 relative animate-slide-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <Quote className="w-10 h-10 text-primary/20 absolute top-6 right-6" />
-                <p className="text-lg leading-relaxed mb-6 relative z-10">
+                {/* Rating Stars */}
+                <div className="flex gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                  ))}
+                </div>
+
+                {/* Quote Icon - positioned better */}
+                <Quote className="w-8 h-8 text-primary/20 mb-4" />
+                
+                {/* Quote Text */}
+                <p className="text-lg leading-relaxed mb-6">
                   "{testimonial.quote}"
                 </p>
+                
+                {/* Author */}
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-semibold">
                     {testimonial.author.split(' ').map(n => n[0]).join('')}
@@ -375,6 +387,7 @@ export default function Landing() {
 
         <div className="container relative z-10">
           <div className="max-w-3xl mx-auto text-center">
+            <Badge variant="outline" className="mb-6">Get Started</Badge>
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
               Ready to face your
               <br />
@@ -408,20 +421,18 @@ export default function Landing() {
               </div>
               <div>
                 <div className="font-bold">Career Reality Engine</div>
-                <div className="text-sm text-muted-foreground">AI-powered career intelligence</div>
+                <div className="text-xs text-muted-foreground">Brutal honesty. Real results.</div>
               </div>
             </Link>
-
-            <nav className="flex flex-wrap justify-center gap-8 text-sm">
-              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
-              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Terms</a>
-            </nav>
-
-            <p className="text-muted-foreground text-sm">
-              © 2024 Career Reality Engine. Free forever.
-            </p>
+            <div className="flex gap-8 text-sm text-muted-foreground">
+              <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
+              <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+              <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
+              <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              © 2024 Career Reality. All rights reserved.
+            </div>
           </div>
         </div>
       </footer>
