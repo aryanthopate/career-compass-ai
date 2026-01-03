@@ -2,12 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import { ResumeProvider } from "@/lib/ResumeContext";
 import { FloatingChat } from "@/components/chat/FloatingChat";
-import Index from "./pages/Index";
+import { HelpButton } from "@/components/HelpButton";
+import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import ResumeBuilder from "./pages/ResumeBuilder";
@@ -28,7 +29,6 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -36,125 +36,66 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
+  if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
 
-function AppContent() {
-  const { user } = useAuth();
+function FloatingElements() {
+  const location = useLocation();
+  const hiddenPaths = ['/chat', '/admin', '/auth', '/'];
+  const shouldHide = hiddenPaths.some(path => 
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
+  );
+  if (shouldHide) return null;
+  return (
+    <>
+      <FloatingChat />
+      <HelpButton />
+    </>
+  );
+}
 
+function AppContent() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/resume-builder"
-          element={
-            <ProtectedRoute>
-              <ResumeBuilder />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/resume-analysis"
-          element={
-            <ProtectedRoute>
-              <ResumeAnalysis />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/skill-gap"
-          element={
-            <ProtectedRoute>
-              <SkillGap />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/interview"
-          element={
-            <ProtectedRoute>
-              <Interview />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/career-verdict"
-          element={
-            <ProtectedRoute>
-              <CareerVerdict />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chat"
-          element={
-            <ProtectedRoute>
-              <Chat />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* Admin Routes */}
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/resume-builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
+        <Route path="/resume-analysis" element={<ProtectedRoute><ResumeAnalysis /></ProtectedRoute>} />
+        <Route path="/skill-gap" element={<ProtectedRoute><SkillGap /></ProtectedRoute>} />
+        <Route path="/interview" element={<ProtectedRoute><Interview /></ProtectedRoute>} />
+        <Route path="/career-verdict" element={<ProtectedRoute><CareerVerdict /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminOverview />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
-        
         <Route path="*" element={<NotFound />} />
       </Routes>
-      
-      {/* Floating Chat - only show when logged in and not on chat page */}
-      {user && <FloatingChatWrapper />}
+      <FloatingElements />
     </>
-  );
-}
-
-function FloatingChatWrapper() {
-  // Don't show floating chat on the full chat page
-  if (window.location.pathname === '/chat') {
-    return null;
-  }
-  return <FloatingChat />;
-}
-
-function AppRoutes() {
-  return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
   );
 }
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <AuthProvider>
-        <ResumeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AppRoutes />
-          </TooltipProvider>
-        </ResumeProvider>
-      </AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <ResumeProvider>
+              <AppContent />
+            </ResumeProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

@@ -29,8 +29,7 @@ import {
   User,
   ChevronDown,
   Bot,
-  Info,
-  Mail,
+  Home,
   Shield,
   Settings,
 } from 'lucide-react';

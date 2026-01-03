@@ -3,7 +3,11 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useResume } from '@/lib/ResumeContext';
+import { useNavigate } from 'react-router-dom';
 import {
   Target,
   Loader2,
@@ -12,6 +16,9 @@ import {
   CheckCircle2,
   TrendingUp,
   Zap,
+  Sparkles,
+  ArrowRight,
+  BookOpen,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -38,6 +45,7 @@ export default function SkillGap() {
   const [experienceLevel, setExperienceLevel] = useState('fresher');
   const [analyzing, setAnalyzing] = useState(false);
   const latestGap = skillGaps[skillGaps.length - 1];
+  const navigate = useNavigate();
 
   const analyzeSkillGap = async () => {
     if (!targetRole) {
@@ -50,12 +58,11 @@ export default function SkillGap() {
     }
 
     setAnalyzing(true);
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const userSkills = currentResume?.skills || [];
     const userSkillsLower = userSkills.map((s) => s.toLowerCase());
 
-    // Simulate skill requirements based on role
     const roleSkills: Record<string, { skill: string; importance: 'critical' | 'important' | 'optional' }[]> = {
       'software engineer': [
         { skill: 'Data Structures & Algorithms', importance: 'critical' },
@@ -96,8 +103,7 @@ export default function SkillGap() {
     };
 
     const roleLower = targetRole.toLowerCase();
-    const requiredSkills =
-      roleSkills[roleLower] || roleSkills.default;
+    const requiredSkills = roleSkills[roleLower] || roleSkills.default;
 
     const missingSkills = requiredSkills
       .filter(
@@ -131,10 +137,7 @@ export default function SkillGap() {
     });
 
     setAnalyzing(false);
-    toast({
-      title: 'Analysis Complete',
-      description: `You're ${readinessScore}% ready for ${targetRole}`,
-    });
+    toast({ title: 'Analysis Complete', description: `You're ${readinessScore}% ready for ${targetRole}` });
   };
 
   const getImportanceColor = (importance: string) => {
@@ -144,7 +147,7 @@ export default function SkillGap() {
       case 'important':
         return 'bg-score-average/10 text-score-average border-score-average/20';
       default:
-        return 'bg-muted text-muted-foreground border-muted';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -159,192 +162,215 @@ export default function SkillGap() {
     }
   };
 
+  const getReadinessColor = (score: number) => {
+    if (score >= 80) return 'from-emerald-500 to-teal-500';
+    if (score >= 60) return 'from-blue-500 to-indigo-500';
+    if (score >= 40) return 'from-orange-500 to-amber-500';
+    return 'from-red-500 to-rose-500';
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container py-8">
+      <main className="container py-8 max-w-5xl">
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold">Skill Gap Engine</h1>
-          <p className="text-muted-foreground mt-1">
-            Discover what skills you need for your target role
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+              <Target className="w-5 h-5 text-white" />
+            </div>
+            Skill Gap Engine
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Discover exactly what skills you need for your target role
           </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Input Section */}
-          <div className="lg:col-span-1">
-            <div className="glass-card p-6 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="targetRole">Target Role</Label>
-                <Input
-                  id="targetRole"
-                  value={targetRole}
-                  onChange={(e) => setTargetRole(e.target.value)}
-                  placeholder="e.g., Software Engineer"
-                />
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {popularRoles.slice(0, 4).map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => setTargetRole(role)}
-                      className={`px-2 py-1 rounded-md text-xs transition-colors ${
-                        targetRole === role
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                      }`}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="experience">Experience Level</Label>
-                <select
-                  id="experience"
-                  value={experienceLevel}
-                  onChange={(e) => setExperienceLevel(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
-                >
-                  {experienceLevels.map((level) => (
-                    <option key={level.value} value={level.value}>
-                      {level.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <Button onClick={analyzeSkillGap} disabled={analyzing} className="w-full">
-                {analyzing ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Target className="w-4 h-4 mr-2" />
-                )}
-                {analyzing ? 'Analyzing...' : 'Analyze Skill Gap'}
-              </Button>
-
-              {currentResume?.skills && currentResume.skills.length > 0 && (
-                <div className="pt-4 border-t border-border">
-                  <p className="text-sm font-medium mb-2">Your Current Skills</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {currentResume.skills.slice(0, 8).map((skill, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-xs"
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="glass-card">
+              <CardContent className="p-6 space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="targetRole">Target Role</Label>
+                  <Input
+                    id="targetRole"
+                    value={targetRole}
+                    onChange={(e) => setTargetRole(e.target.value)}
+                    placeholder="e.g., Software Engineer"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {popularRoles.slice(0, 4).map((role) => (
+                      <button
+                        key={role}
+                        onClick={() => setTargetRole(role)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          targetRole === role
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-secondary hover:bg-secondary/80'
+                        }`}
                       >
-                        {skill}
-                      </span>
+                        {role}
+                      </button>
                     ))}
-                    {currentResume.skills.length > 8 && (
-                      <span className="px-2 py-0.5 text-muted-foreground text-xs">
-                        +{currentResume.skills.length - 8} more
-                      </span>
-                    )}
                   </div>
                 </div>
-              )}
-            </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="experience">Experience Level</Label>
+                  <select
+                    id="experience"
+                    value={experienceLevel}
+                    onChange={(e) => setExperienceLevel(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+                  >
+                    {experienceLevels.map((level) => (
+                      <option key={level.value} value={level.value}>
+                        {level.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <Button onClick={analyzeSkillGap} disabled={analyzing} className="w-full" size="lg">
+                  {analyzing ? (
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  ) : (
+                    <Sparkles className="w-5 h-5 mr-2" />
+                  )}
+                  {analyzing ? 'Analyzing...' : 'Analyze Skills'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {currentResume?.skills && currentResume.skills.length > 0 && (
+              <Card className="glass-card">
+                <CardContent className="p-6">
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-score-good" />
+                    Your Current Skills
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {currentResume.skills.slice(0, 10).map((skill, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {currentResume.skills.length > 10 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{currentResume.skills.length - 10} more
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Results Section */}
           <div className="lg:col-span-2">
             {!latestGap && !analyzing && (
-              <div className="glass-card p-12 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                  <Target className="w-8 h-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-semibold mb-2">Analyze Your Skill Gap</h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Enter your target role and experience level to see what skills
-                  you need to develop.
-                </p>
-              </div>
+              <Card className="glass-card">
+                <CardContent className="p-12 text-center">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center mx-auto mb-6">
+                    <Target className="w-10 h-10 text-orange-500" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-3">Analyze Your Skill Gap</h2>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Enter your target role and experience level to see what skills
+                    you need to develop.
+                  </p>
+                </CardContent>
+              </Card>
             )}
 
             {analyzing && (
-              <div className="glass-card p-12 text-center animate-pulse-slow">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                </div>
-                <h2 className="text-xl font-semibold mb-2">Analyzing Skills</h2>
-                <p className="text-muted-foreground">
-                  Comparing your profile against industry requirements...
-                </p>
-              </div>
+              <Card className="glass-card">
+                <CardContent className="p-12 text-center">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
+                    <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-3">Analyzing Skills</h2>
+                  <p className="text-muted-foreground">
+                    Comparing your profile against industry requirements...
+                  </p>
+                </CardContent>
+              </Card>
             )}
 
             {latestGap && !analyzing && (
               <div className="space-y-6 animate-fade-in">
                 {/* Readiness Score */}
-                <div className="glass-card p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold">Readiness for {latestGap.targetRole}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Based on your current skill set
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-primary">
-                        {latestGap.readinessScore}%
+                <Card className="glass-card overflow-hidden">
+                  <div className="p-6 bg-gradient-to-r from-orange-500/5 to-amber-500/5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Readiness for {latestGap.targetRole}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Based on your current skill set
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">Job Ready</p>
+                      <div className="text-right">
+                        <div className={`text-4xl font-bold bg-gradient-to-r ${getReadinessColor(latestGap.readinessScore)} bg-clip-text text-transparent`}>
+                          {latestGap.readinessScore}%
+                        </div>
+                        <p className="text-xs text-muted-foreground">Job Ready</p>
+                      </div>
                     </div>
+                    <Progress value={latestGap.readinessScore} className="h-3" />
                   </div>
-                  <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all duration-500"
-                      style={{ width: `${latestGap.readinessScore}%` }}
-                    />
-                  </div>
-                </div>
+                </Card>
 
                 {/* Missing Skills */}
                 {latestGap.missingSkills.length > 0 ? (
-                  <div className="glass-card p-6">
-                    <h3 className="font-semibold flex items-center gap-2 mb-4">
-                      <TrendingUp className="w-5 h-5 text-primary" />
-                      Skills to Develop ({latestGap.missingSkills.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {latestGap.missingSkills.map((item, index) => {
-                        const Icon = getImportanceIcon(item.importance);
-                        return (
-                          <div
-                            key={index}
-                            className={`p-4 rounded-lg border ${getImportanceColor(item.importance)}`}
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex items-start gap-3">
-                                <Icon className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                                <div>
-                                  <p className="font-medium">{item.skill}</p>
-                                  <p className="text-sm opacity-80 capitalize">
-                                    {item.importance} Skill
-                                  </p>
+                  <Card className="glass-card">
+                    <CardContent className="p-6">
+                      <h3 className="font-semibold flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <BookOpen className="w-4 h-4 text-primary" />
+                        </div>
+                        Skills to Develop ({latestGap.missingSkills.length})
+                      </h3>
+                      <div className="space-y-3">
+                        {latestGap.missingSkills.map((item, index) => {
+                          const Icon = getImportanceIcon(item.importance);
+                          return (
+                            <div
+                              key={index}
+                              className={`p-4 rounded-xl border ${getImportanceColor(item.importance)}`}
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-3">
+                                  <Icon className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium">{item.skill}</p>
+                                    <p className="text-sm opacity-80 capitalize">
+                                      {item.importance} Skill
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-sm opacity-80">
-                                <Clock className="w-4 h-4" />
-                                {item.timeToLearn}
+                                <Badge variant="outline" className="gap-1.5 flex-shrink-0">
+                                  <Clock className="w-3 h-3" />
+                                  {item.timeToLearn}
+                                </Badge>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
                 ) : (
-                  <div className="glass-card p-6 text-center">
-                    <CheckCircle2 className="w-12 h-12 text-score-excellent mx-auto mb-4" />
-                    <h3 className="font-semibold text-lg mb-2">
-                      Excellent! You have all required skills
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Your skill set matches the requirements for {latestGap.targetRole}.
-                    </p>
-                  </div>
+                  <Card className="glass-card">
+                    <CardContent className="p-8 text-center">
+                      <CheckCircle2 className="w-16 h-16 text-score-excellent mx-auto mb-4" />
+                      <h3 className="text-xl font-bold mb-2">
+                        Excellent! You have all required skills
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Your skill set matches the requirements for {latestGap.targetRole}.
+                      </p>
+                    </CardContent>
+                  </Card>
                 )}
 
                 {/* Legend */}
@@ -362,6 +388,23 @@ export default function SkillGap() {
                     Optional - Nice to have
                   </div>
                 </div>
+
+                {/* Next Steps */}
+                <Card className="glass-card">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold mb-4">Continue Your Journey</h3>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <Button variant="outline" className="justify-start gap-3" onClick={() => navigate('/interview')}>
+                        <TrendingUp className="w-4 h-4" />
+                        Practice Interview
+                      </Button>
+                      <Button variant="outline" className="justify-start gap-3" onClick={() => navigate('/career-verdict')}>
+                        <Target className="w-4 h-4" />
+                        Get Career Verdict
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </div>
