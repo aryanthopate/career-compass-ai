@@ -6,10 +6,24 @@ import { Header } from '@/components/layout/Header';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useChatStream, ChatMessage as ChatMessageType } from '@/lib/useChatStream';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useChatStream } from '@/lib/useChatStream';
 import { 
   Plus, 
   MessageSquare, 
@@ -19,13 +33,25 @@ import {
   Search,
   Sparkles,
   Clock,
-  ChevronLeft,
   PanelLeftClose,
   PanelLeft,
   Zap,
   FileText,
   Target,
   Briefcase,
+  MoreHorizontal,
+  Pin,
+  PinOff,
+  Archive,
+  ArchiveRestore,
+  Edit3,
+  Settings,
+  Keyboard,
+  HelpCircle,
+  Star,
+  Trash,
+  Check,
+  X,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -33,25 +59,33 @@ interface Conversation {
   id: string;
   title: string;
   updated_at: string;
+  pinned?: boolean;
+  archived?: boolean;
 }
 
 const quickPrompts = [
-  { icon: FileText, text: 'Review my resume', prompt: 'Can you help me improve my resume? What are the key things I should focus on?' },
-  { icon: Target, text: 'Skill recommendations', prompt: 'What skills should I learn to become a better software engineer in 2024?' },
-  { icon: Briefcase, text: 'Interview tips', prompt: 'Give me the top 5 tips for acing a technical interview at a FAANG company.' },
-  { icon: Zap, text: 'Career advice', prompt: 'I am a fresh graduate. What career path should I choose in tech?' },
+  { icon: FileText, text: 'Review my resume', prompt: 'Can you help me improve my resume? What are the key things I should focus on?', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+  { icon: Target, text: 'Skill recommendations', prompt: 'What skills should I learn to become a better software engineer in 2024?', color: 'text-orange-500', bg: 'bg-orange-500/10' },
+  { icon: Briefcase, text: 'Interview tips', prompt: 'Give me the top 5 tips for acing a technical interview at a FAANG company.', color: 'text-pink-500', bg: 'bg-pink-500/10' },
+  { icon: Zap, text: 'Career advice', prompt: 'I am a fresh graduate. What career path should I choose in tech?', color: 'text-violet-500', bg: 'bg-violet-500/10' },
 ];
 
 export default function Chat() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const { messages, isLoading, error, sendMessage, clearMessages, setMessages } = useChatStream();
 
@@ -92,7 +126,15 @@ export default function Chat() {
     if (error) {
       console.error('Error loading conversations:', error);
     } else {
-      setConversations(data || []);
+      // Add pinned/archived state (stored locally for now)
+      const stored = localStorage.getItem('chat_meta') || '{}';
+      const meta = JSON.parse(stored);
+      const enhanced = (data || []).map(c => ({
+        ...c,
+        pinned: meta[c.id]?.pinned || false,
+        archived: meta[c.id]?.archived || false,
+      }));
+      setConversations(enhanced);
     }
     setLoadingConversations(false);
   };
@@ -149,6 +191,15 @@ export default function Chat() {
     }
   };
 
+  const updateMeta = (id: string, updates: { pinned?: boolean; archived?: boolean }) => {
+    const stored = localStorage.getItem('chat_meta') || '{}';
+    const meta = JSON.parse(stored);
+    meta[id] = { ...(meta[id] || {}), ...updates };
+    localStorage.setItem('chat_meta', JSON.stringify(meta));
+    
+    setConversations(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  };
+
   const createNewConversation = async () => {
     if (!user) return;
 
@@ -163,7 +214,7 @@ export default function Chat() {
       return;
     }
 
-    setConversations(prev => [data, ...prev]);
+    setConversations(prev => [{ ...data, pinned: false, archived: false }, ...prev]);
     setCurrentConversationId(data.id);
     clearMessages();
     return data.id;
@@ -177,11 +228,24 @@ export default function Chat() {
   const deleteConversation = async (id: string) => {
     await supabase.from('chat_conversations').delete().eq('id', id);
     setConversations(prev => prev.filter(c => c.id !== id));
+    setDeleteConfirmId(null);
     
     if (currentConversationId === id) {
       setCurrentConversationId(null);
       clearMessages();
     }
+    toast({ title: 'Deleted', description: 'Conversation removed.' });
+  };
+
+  const renameConversation = async (id: string, newTitle: string) => {
+    await supabase
+      .from('chat_conversations')
+      .update({ title: newTitle })
+      .eq('id', id);
+    
+    setConversations(prev => prev.map(c => c.id === id ? { ...c, title: newTitle } : c));
+    setEditingId(null);
+    toast({ title: 'Renamed', description: 'Conversation renamed.' });
   };
 
   const handleSendMessage = async (input: string) => {
@@ -198,10 +262,6 @@ export default function Chat() {
     }
   };
 
-  const filteredConversations = conversations.filter(c => 
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const formatTime = (date: string) => {
     const d = new Date(date);
     const now = new Date();
@@ -210,9 +270,14 @@ export default function Chat() {
     
     if (days === 0) return 'Today';
     if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
+    if (days < 7) return `${days}d ago`;
     return d.toLocaleDateString();
   };
+
+  // Filter and sort conversations
+  const pinnedConvs = conversations.filter(c => c.pinned && !c.archived && c.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const regularConvs = conversations.filter(c => !c.pinned && !c.archived && c.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const archivedConvs = conversations.filter(c => c.archived && c.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   if (authLoading) {
     return (
@@ -226,94 +291,186 @@ export default function Chat() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'w-80' : 'w-0'} border-r border-border bg-card/30 backdrop-blur-sm flex flex-col transition-all duration-300 overflow-hidden`}>
-          <div className="p-4 space-y-4">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Fixed Sidebar */}
+        <aside className={`${sidebarOpen ? 'w-80' : 'w-0'} flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm flex flex-col transition-all duration-300 overflow-hidden h-[calc(100vh-4rem)]`}>
+          {/* Sidebar Header */}
+          <div className="p-4 space-y-3 border-b border-border flex-shrink-0">
             <Button onClick={createNewConversation} className="w-full gap-2 shadow-sm">
               <Plus className="w-4 h-4" />
-              New Conversation
+              New Chat
             </Button>
             
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search chats..."
+                placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 bg-background/50"
               />
             </div>
+
+            {/* View Toggle */}
+            <div className="flex gap-1">
+              <Button
+                variant={!showArchived ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setShowArchived(false)}
+                className="flex-1 text-xs"
+              >
+                <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                Chats
+              </Button>
+              <Button
+                variant={showArchived ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setShowArchived(true)}
+                className="flex-1 text-xs"
+              >
+                <Archive className="w-3.5 h-3.5 mr-1.5" />
+                Archived
+              </Button>
+            </div>
           </div>
           
-          <ScrollArea className="flex-1 px-2">
+          {/* Scrollable Conversations List */}
+          <div className="flex-1 overflow-y-auto px-2 py-2">
             {loadingConversations ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
               </div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  {searchQuery ? 'No matches found' : 'No conversations yet'}
-                </p>
-              </div>
+            ) : showArchived ? (
+              archivedConvs.length === 0 ? (
+                <div className="text-center py-8">
+                  <Archive className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground">No archived chats</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {archivedConvs.map((conv) => (
+                    <ConversationItem
+                      key={conv.id}
+                      conv={conv}
+                      isActive={currentConversationId === conv.id}
+                      onSelect={() => selectConversation(conv.id)}
+                      onPin={() => updateMeta(conv.id, { pinned: !conv.pinned })}
+                      onArchive={() => updateMeta(conv.id, { archived: false })}
+                      onDelete={() => setDeleteConfirmId(conv.id)}
+                      onEdit={() => { setEditingId(conv.id); setEditTitle(conv.title); }}
+                      formatTime={formatTime}
+                      isEditing={editingId === conv.id}
+                      editTitle={editTitle}
+                      setEditTitle={setEditTitle}
+                      onSaveEdit={() => renameConversation(conv.id, editTitle)}
+                      onCancelEdit={() => setEditingId(null)}
+                    />
+                  ))}
+                </div>
+              )
             ) : (
-              <div className="space-y-1 pb-4">
-                {filteredConversations.map((conv) => (
-                  <div
-                    key={conv.id}
-                    className={`group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                      currentConversationId === conv.id 
-                        ? 'bg-primary/10 border border-primary/20' 
-                        : 'hover:bg-secondary/50 border border-transparent'
-                    }`}
-                    onClick={() => selectConversation(conv.id)}
-                  >
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      currentConversationId === conv.id ? 'bg-primary/20' : 'bg-secondary'
-                    }`}>
-                      <MessageSquare className={`w-4 h-4 ${currentConversationId === conv.id ? 'text-primary' : 'text-muted-foreground'}`} />
+              <>
+                {/* Pinned Section */}
+                {pinnedConvs.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <Pin className="w-3 h-3" />
+                      Pinned
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{conv.title}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatTime(conv.updated_at)}
-                      </p>
+                    <div className="space-y-1">
+                      {pinnedConvs.map((conv) => (
+                        <ConversationItem
+                          key={conv.id}
+                          conv={conv}
+                          isActive={currentConversationId === conv.id}
+                          onSelect={() => selectConversation(conv.id)}
+                          onPin={() => updateMeta(conv.id, { pinned: false })}
+                          onArchive={() => updateMeta(conv.id, { archived: true })}
+                          onDelete={() => setDeleteConfirmId(conv.id)}
+                          onEdit={() => { setEditingId(conv.id); setEditTitle(conv.title); }}
+                          formatTime={formatTime}
+                          isEditing={editingId === conv.id}
+                          editTitle={editTitle}
+                          setEditTitle={setEditTitle}
+                          onSaveEdit={() => renameConversation(conv.id, editTitle)}
+                          onCancelEdit={() => setEditingId(null)}
+                        />
+                      ))}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteConversation(conv.id);
-                      }}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
-                    </Button>
                   </div>
-                ))}
-              </div>
+                )}
+
+                {/* Regular Chats */}
+                {regularConvs.length === 0 && pinnedConvs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      {searchQuery ? 'No matches found' : 'No conversations yet'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {regularConvs.length > 0 && pinnedConvs.length > 0 && (
+                      <div className="flex items-center gap-2 px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        <Clock className="w-3 h-3" />
+                        Recent
+                      </div>
+                    )}
+                    {regularConvs.map((conv) => (
+                      <ConversationItem
+                        key={conv.id}
+                        conv={conv}
+                        isActive={currentConversationId === conv.id}
+                        onSelect={() => selectConversation(conv.id)}
+                        onPin={() => updateMeta(conv.id, { pinned: true })}
+                        onArchive={() => updateMeta(conv.id, { archived: true })}
+                        onDelete={() => setDeleteConfirmId(conv.id)}
+                        onEdit={() => { setEditingId(conv.id); setEditTitle(conv.title); }}
+                        formatTime={formatTime}
+                        isEditing={editingId === conv.id}
+                        editTitle={editTitle}
+                        setEditTitle={setEditTitle}
+                        onSaveEdit={() => renameConversation(conv.id, editTitle)}
+                        onCancelEdit={() => setEditingId(null)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
-          </ScrollArea>
+          </div>
+
+          {/* Sidebar Footer */}
+          <div className="p-3 border-t border-border flex-shrink-0 space-y-1">
+            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={() => setSettingsOpen(true)}>
+              <Settings className="w-4 h-4" />
+              Settings
+            </Button>
+            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground">
+              <Keyboard className="w-4 h-4" />
+              Shortcuts
+            </Button>
+            <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground">
+              <HelpCircle className="w-4 h-4" />
+              Help & FAQ
+            </Button>
+          </div>
         </aside>
 
         {/* Sidebar Toggle */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-card border border-border rounded-r-lg shadow-sm hover:bg-secondary transition-colors"
-          style={{ left: sidebarOpen ? '318px' : '0' }}
+          className={`absolute top-4 z-20 p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-secondary transition-all ${sidebarOpen ? 'left-[308px]' : 'left-2'}`}
         >
           {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
         </button>
 
         {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col relative">
+        <main className="flex-1 flex flex-col min-w-0 h-[calc(100vh-4rem)]">
           {currentConversationId || messages.length > 0 ? (
             <>
-              <ScrollArea className="flex-1 p-6">
+              {/* Messages with separate scroll */}
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6">
                 <div className="max-w-3xl mx-auto space-y-6">
                   {messages.map((msg) => (
                     <ChatMessage key={msg.id} message={msg} />
@@ -335,9 +492,10 @@ export default function Chat() {
                   )}
                   <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
+              </div>
               
-              <div className="border-t border-border p-4 bg-background/80 backdrop-blur-sm">
+              {/* Input fixed at bottom */}
+              <div className="flex-shrink-0 border-t border-border p-4 bg-background/80 backdrop-blur-sm">
                 <div className="max-w-3xl mx-auto">
                   <ChatInput 
                     onSend={handleSendMessage} 
@@ -348,7 +506,7 @@ export default function Chat() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
               <div className="max-w-2xl w-full text-center">
                 {/* Hero */}
                 <div className="relative mb-8">
@@ -374,8 +532,8 @@ export default function Chat() {
                         onClick={() => handleQuickPrompt(item.prompt)}
                         className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/50 hover:shadow-md transition-all duration-200 text-left"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                          <Icon className="w-5 h-5 text-primary" />
+                        <div className={`w-10 h-10 rounded-lg ${item.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                          <Icon className={`w-5 h-5 ${item.color}`} />
                         </div>
                         <span className="font-medium">{item.text}</span>
                       </button>
@@ -397,6 +555,180 @@ export default function Chat() {
           )}
         </main>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash className="w-5 h-5 text-destructive" />
+              Delete Conversation?
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently delete this conversation and all its messages. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteConfirmId && deleteConversation(deleteConfirmId)}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Chat Settings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Auto-save conversations</p>
+                <p className="text-sm text-muted-foreground">Save chats automatically</p>
+              </div>
+              <Badge variant="secondary">Enabled</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">AI Model</p>
+                <p className="text-sm text-muted-foreground">Current model in use</p>
+              </div>
+              <Badge variant="outline">Gemini Pro</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Conversation history</p>
+                <p className="text-sm text-muted-foreground">Total saved chats</p>
+              </div>
+              <Badge variant="secondary">{conversations.length}</Badge>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Conversation Item Component
+function ConversationItem({
+  conv,
+  isActive,
+  onSelect,
+  onPin,
+  onArchive,
+  onDelete,
+  onEdit,
+  formatTime,
+  isEditing,
+  editTitle,
+  setEditTitle,
+  onSaveEdit,
+  onCancelEdit,
+}: {
+  conv: Conversation;
+  isActive: boolean;
+  onSelect: () => void;
+  onPin: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  formatTime: (d: string) => string;
+  isEditing: boolean;
+  editTitle: string;
+  setEditTitle: (t: string) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+}) {
+  return (
+    <div
+      className={`group flex items-center gap-2 px-2 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
+        isActive 
+          ? 'bg-primary/10 border border-primary/20' 
+          : 'hover:bg-secondary/50 border border-transparent'
+      }`}
+      onClick={() => !isEditing && onSelect()}
+    >
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+        isActive ? 'bg-primary/20' : 'bg-secondary'
+      }`}>
+        {conv.pinned ? (
+          <Star className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-yellow-500'}`} />
+        ) : (
+          <MessageSquare className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+        )}
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        {isEditing ? (
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <Input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="h-7 text-sm"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') onSaveEdit();
+                if (e.key === 'Escape') onCancelEdit();
+              }}
+            />
+            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={onSaveEdit}>
+              <Check className="w-3.5 h-3.5 text-green-500" />
+            </Button>
+            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={onCancelEdit}>
+              <X className="w-3.5 h-3.5 text-destructive" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm font-medium truncate">{conv.title}</p>
+            <p className="text-xs text-muted-foreground">{formatTime(conv.updated_at)}</p>
+          </>
+        )}
+      </div>
+
+      {!isEditing && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onPin(); }}>
+              {conv.pinned ? <PinOff className="w-4 h-4 mr-2" /> : <Pin className="w-4 h-4 mr-2" />}
+              {conv.pinned ? 'Unpin' : 'Pin to top'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+              <Edit3 className="w-4 h-4 mr-2" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive(); }}>
+              {conv.archived ? <ArchiveRestore className="w-4 h-4 mr-2" /> : <Archive className="w-4 h-4 mr-2" />}
+              {conv.archived ? 'Unarchive' : 'Archive'}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive focus:text-destructive">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }
