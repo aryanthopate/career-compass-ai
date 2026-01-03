@@ -330,8 +330,23 @@ export default function Chat() {
       <Header />
       
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Fixed Sidebar */}
-        <aside className={`${sidebarOpen ? 'w-80' : 'w-0'} flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm flex flex-col transition-all duration-300 overflow-hidden h-[calc(100vh-4rem)]`}>
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        
+        {/* Sidebar */}
+        <aside className={`
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} 
+          ${sidebarOpen ? 'w-80' : 'md:w-0'} 
+          fixed md:relative z-50 md:z-auto
+          h-[calc(100vh-4rem)] md:h-auto
+          flex-shrink-0 border-r border-border bg-card/95 md:bg-card/50 backdrop-blur-sm 
+          flex flex-col transition-all duration-300 overflow-hidden
+        `}>
           {/* Sidebar Header */}
           <div className="p-4 space-y-3 border-b border-border flex-shrink-0">
             <Button onClick={createNewConversation} className="w-full gap-2 shadow-sm">
@@ -504,17 +519,25 @@ export default function Chat() {
         {/* Sidebar Toggle */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`absolute top-4 z-20 p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-secondary transition-all ${sidebarOpen ? 'left-[308px]' : 'left-2'}`}
+          className={`absolute top-4 z-30 p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-secondary transition-all ${sidebarOpen ? 'left-[308px] hidden md:block' : 'left-2'}`}
         >
           {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
         </button>
+        
+        {/* Mobile toggle always visible */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="md:hidden fixed top-[4.5rem] left-2 z-30 p-2 bg-card border border-border rounded-lg shadow-sm hover:bg-secondary transition-all"
+        >
+          <PanelLeft className="w-4 h-4" />
+        </button>
 
         {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col min-w-0 h-[calc(100vh-4rem)]">
+        <main className="flex-1 flex flex-col min-w-0 h-[calc(100vh-4rem)] w-full">
           {currentConversationId || messages.length > 0 ? (
             <>
               {/* Messages with separate scroll */}
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 chat-scrollbar">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 chat-scrollbar">
                 <div className="max-w-3xl mx-auto space-y-6">
                   {messages.map((msg) => (
                     <ChatMessage key={msg.id} message={msg} />

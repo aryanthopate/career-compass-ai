@@ -217,7 +217,7 @@ export default function Profile() {
         {/* Profile Header */}
         <div className="relative mb-8">
           {/* Cover Banner */}
-          <div className="relative h-56 rounded-2xl overflow-hidden group">
+          <div className="relative h-32 sm:h-44 md:h-56 rounded-2xl overflow-hidden group">
             {bannerUrl ? (
               <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
             ) : (
@@ -226,7 +226,7 @@ export default function Profile() {
               </div>
             )}
             {/* Banner Edit Controls */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 sm:gap-3">
               <input
                 ref={bannerInputRef}
                 type="file"
@@ -238,73 +238,85 @@ export default function Profile() {
                 variant="secondary"
                 size="sm"
                 onClick={() => bannerInputRef.current?.click()}
-                className="gap-2"
+                className="gap-1 sm:gap-2 text-xs sm:text-sm"
               >
-                <Image className="w-4 h-4" />
-                Change Banner
+                <Image className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Change Banner</span>
+                <span className="sm:hidden">Change</span>
               </Button>
               {bannerUrl && (
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={removeBanner}
-                  className="gap-2"
+                  className="gap-1 sm:gap-2 text-xs sm:text-sm"
                 >
-                  <X className="w-4 h-4" />
-                  Remove
+                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Remove</span>
                 </Button>
               )}
             </div>
           </div>
           
           {/* Avatar & Profile Info */}
-          <div className="absolute -bottom-16 left-8 flex items-end gap-6">
+          <div className="absolute -bottom-12 sm:-bottom-16 left-4 sm:left-8 flex items-end gap-3 sm:gap-6">
             <div className="relative">
-              <div className="w-32 h-32 rounded-2xl bg-card border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
+              <div className="w-20 h-20 sm:w-28 md:w-32 sm:h-28 md:h-32 rounded-2xl bg-card border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
                 {formData.avatar_url ? (
                   <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-4xl font-bold text-primary">
+                  <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
                     {getInitials(formData.full_name, profile?.email)}
                   </span>
                 )}
               </div>
               <button 
                 onClick={() => setEditDialogOpen(true)}
-                className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
+                className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
               >
-                <Camera className="w-5 h-5" />
+                <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
             
-            <div className="pb-4">
-              <h1 className="text-3xl font-bold">
+            <div className="pb-2 sm:pb-4 hidden sm:block">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
                 {formData.full_name || 'Set your name'}
               </h1>
-              <p className="text-muted-foreground flex items-center gap-2 mt-1">
+              <p className="text-muted-foreground flex items-center gap-2 mt-1 text-sm">
                 <Mail className="w-4 h-4" />
                 {profile?.email || user?.email}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
               </p>
             </div>
           </div>
           
           {/* Edit Profile Button */}
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
             <Button 
               onClick={() => setEditDialogOpen(true)}
-              className="gap-2 shadow-lg"
+              className="gap-1 sm:gap-2 shadow-lg text-xs sm:text-sm"
+              size="sm"
             >
-              <Edit3 className="w-4 h-4" />
-              Edit Profile
+              <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Edit Profile</span>
+              <span className="sm:hidden">Edit</span>
             </Button>
           </div>
         </div>
         
+        {/* Mobile Profile Info */}
+        <div className="sm:hidden mt-16 mb-4 px-2">
+          <h1 className="text-xl font-bold">{formData.full_name || 'Set your name'}</h1>
+          <p className="text-muted-foreground flex items-center gap-2 mt-1 text-sm">
+            <Mail className="w-4 h-4" />
+            {profile?.email || user?.email}
+          </p>
+        </div>
+        
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-20 mb-6 sm:mb-8">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
