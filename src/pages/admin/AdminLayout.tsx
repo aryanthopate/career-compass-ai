@@ -27,14 +27,17 @@ export default function AdminLayout() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-    if (!adminLoading && !isAdmin && user) {
-      navigate('/');
+    // Only redirect after all loading is complete
+    if (!authLoading && !adminLoading) {
+      if (!user) {
+        navigate('/auth');
+      } else if (!isAdmin) {
+        navigate('/');
+      }
     }
   }, [user, isAdmin, authLoading, adminLoading, navigate]);
 
+  // Show loading while either auth or admin check is in progress
   if (authLoading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -43,7 +46,8 @@ export default function AdminLayout() {
     );
   }
 
-  if (!isAdmin) {
+  // After loading, if not admin, don't render (redirect will happen via useEffect)
+  if (!user || !isAdmin) {
     return null;
   }
 
