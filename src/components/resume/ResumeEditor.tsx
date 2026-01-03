@@ -59,11 +59,15 @@ export function ResumeEditor() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      saveResume(formData);
-      toast({
-        title: 'Resume saved!',
-        description: `Version ${(currentResume?.version || 0) + 1} saved successfully.`,
-      });
+      const saved = await saveResume(formData);
+      if (saved) {
+        toast({
+          title: 'Resume saved!',
+          description: `Version ${saved.version} saved successfully.`,
+        });
+      } else {
+        throw new Error('Failed to save');
+      }
     } catch (error) {
       toast({
         title: 'Error saving resume',
