@@ -9,6 +9,7 @@ import { ResumeProvider } from "@/lib/ResumeContext";
 import { FloatingChat } from "@/components/chat/FloatingChat";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import ResumeAnalysis from "./pages/ResumeAnalysis";
 import SkillGap from "./pages/SkillGap";
@@ -53,6 +54,14 @@ function AppContent() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/resume-builder"
           element={

@@ -7,13 +7,25 @@ import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useChatStream, ChatMessage as ChatMessageType } from '@/lib/useChatStream';
 import { 
   Plus, 
   MessageSquare, 
   Trash2, 
   Loader2,
-  Bot 
+  Bot,
+  Search,
+  Sparkles,
+  Clock,
+  ChevronLeft,
+  PanelLeftClose,
+  PanelLeft,
+  Zap,
+  FileText,
+  Target,
+  Briefcase,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -23,6 +35,13 @@ interface Conversation {
   updated_at: string;
 }
 
+const quickPrompts = [
+  { icon: FileText, text: 'Review my resume', prompt: 'Can you help me improve my resume? What are the key things I should focus on?' },
+  { icon: Target, text: 'Skill recommendations', prompt: 'What skills should I learn to become a better software engineer in 2024?' },
+  { icon: Briefcase, text: 'Interview tips', prompt: 'Give me the top 5 tips for acing a technical interview at a FAANG company.' },
+  { icon: Zap, text: 'Career advice', prompt: 'I am a fresh graduate. What career path should I choose in tech?' },
+];
+
 export default function Chat() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +50,8 @@ export default function Chat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [loadingConversations, setLoadingConversations] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   
   const { messages, isLoading, error, sendMessage, clearMessages, setMessages } = useChatStream();
 
@@ -56,7 +77,6 @@ export default function Chat() {
     }
   }, [error]);
 
-  // Auto-save messages when they change
   useEffect(() => {
     if (currentConversationId && messages.length > 0 && !isLoading) {
       saveMessages();
@@ -99,13 +119,11 @@ export default function Chat() {
   const saveMessages = async () => {
     if (!currentConversationId || !user) return;
 
-    // Delete existing messages
     await supabase
       .from('chat_messages')
       .delete()
       .eq('conversation_id', currentConversationId);
 
-    // Insert new messages
     const messagesToInsert = messages.map(m => ({
       conversation_id: currentConversationId,
       user_id: user.id,
@@ -117,7 +135,6 @@ export default function Chat() {
       await supabase.from('chat_messages').insert(messagesToInsert);
     }
 
-    // Update conversation title from first user message
     const firstUserMessage = messages.find(m => m.role === 'user');
     if (firstUserMessage) {
       const title = firstUserMessage.content.slice(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '');
@@ -149,6 +166,7 @@ export default function Chat() {
     setConversations(prev => [data, ...prev]);
     setCurrentConversationId(data.id);
     clearMessages();
+    return data.id;
   };
 
   const selectConversation = (id: string) => {
@@ -173,6 +191,29 @@ export default function Chat() {
     sendMessage(input);
   };
 
+  const handleQuickPrompt = async (prompt: string) => {
+    const convId = currentConversationId || await createNewConversation();
+    if (convId) {
+      sendMessage(prompt);
+    }
+  };
+
+  const filteredConversations = conversations.filter(c => 
+    c.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    return d.toLocaleDateString();
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -187,47 +228,70 @@ export default function Chat() {
       
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-border bg-card/50 flex flex-col">
-          <div className="p-4">
-            <Button onClick={createNewConversation} className="w-full gap-2">
+        <aside className={`${sidebarOpen ? 'w-80' : 'w-0'} border-r border-border bg-card/30 backdrop-blur-sm flex flex-col transition-all duration-300 overflow-hidden`}>
+          <div className="p-4 space-y-4">
+            <Button onClick={createNewConversation} className="w-full gap-2 shadow-sm">
               <Plus className="w-4 h-4" />
-              New Chat
+              New Conversation
             </Button>
+            
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search chats..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-background/50"
+              />
+            </div>
           </div>
           
           <ScrollArea className="flex-1 px-2">
             {loadingConversations ? (
-              <div className="flex justify-center py-4">
+              <div className="flex justify-center py-8">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
               </div>
-            ) : conversations.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-4">
-                No conversations yet
-              </p>
+            ) : filteredConversations.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {searchQuery ? 'No matches found' : 'No conversations yet'}
+                </p>
+              </div>
             ) : (
               <div className="space-y-1 pb-4">
-                {conversations.map((conv) => (
+                {filteredConversations.map((conv) => (
                   <div
                     key={conv.id}
-                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                    className={`group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                       currentConversationId === conv.id 
-                        ? 'bg-secondary' 
-                        : 'hover:bg-secondary/50'
+                        ? 'bg-primary/10 border border-primary/20' 
+                        : 'hover:bg-secondary/50 border border-transparent'
                     }`}
                     onClick={() => selectConversation(conv.id)}
                   >
-                    <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <span className="flex-1 text-sm truncate">{conv.title}</span>
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      currentConversationId === conv.id ? 'bg-primary/20' : 'bg-secondary'
+                    }`}>
+                      <MessageSquare className={`w-4 h-4 ${currentConversationId === conv.id ? 'text-primary' : 'text-muted-foreground'}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{conv.title}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatTime(conv.updated_at)}
+                      </p>
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteConversation(conv.id);
                       }}
                     >
-                      <Trash2 className="w-3 h-3 text-muted-foreground" />
+                      <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
                     </Button>
                   </div>
                 ))}
@@ -236,22 +300,35 @@ export default function Chat() {
           </ScrollArea>
         </aside>
 
+        {/* Sidebar Toggle */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-card border border-border rounded-r-lg shadow-sm hover:bg-secondary transition-colors"
+          style={{ left: sidebarOpen ? '318px' : '0' }}
+        >
+          {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+        </button>
+
         {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col relative">
           {currentConversationId || messages.length > 0 ? (
             <>
-              <ScrollArea className="flex-1 p-4">
+              <ScrollArea className="flex-1 p-6">
                 <div className="max-w-3xl mx-auto space-y-6">
                   {messages.map((msg) => (
                     <ChatMessage key={msg.id} message={msg} />
                   ))}
                   {isLoading && messages[messages.length - 1]?.role === 'user' && (
                     <div className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-                        <Bot className="w-4 h-4 text-accent-foreground" />
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                        <Bot className="w-5 h-5 text-primary-foreground" />
                       </div>
-                      <div className="flex items-center gap-2 px-4 py-3 bg-card border border-border rounded-2xl rounded-bl-md">
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                      <div className="flex items-center gap-3 px-5 py-4 bg-card border border-border rounded-2xl rounded-tl-md shadow-sm">
+                        <div className="flex gap-1">
+                          <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                         <span className="text-sm text-muted-foreground">Thinking...</span>
                       </div>
                     </div>
@@ -260,29 +337,62 @@ export default function Chat() {
                 </div>
               </ScrollArea>
               
-              <div className="border-t border-border p-4 bg-background">
+              <div className="border-t border-border p-4 bg-background/80 backdrop-blur-sm">
                 <div className="max-w-3xl mx-auto">
                   <ChatInput 
                     onSend={handleSendMessage} 
                     isLoading={isLoading}
-                    placeholder="Ask me anything about careers, resumes, interviews..."
+                    placeholder="Ask about careers, resumes, interviews, skills..."
                   />
                 </div>
               </div>
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-                <Bot className="w-8 h-8 text-primary" />
+              <div className="max-w-2xl w-full text-center">
+                {/* Hero */}
+                <div className="relative mb-8">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 blur-3xl opacity-50" />
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                      <Sparkles className="w-10 h-10 text-primary-foreground" />
+                    </div>
+                    <h2 className="text-3xl font-bold mb-3">Career AI Assistant</h2>
+                    <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                      Your personal AI career coach. Ask anything about resumes, interviews, skills, or career paths.
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Quick Prompts */}
+                <div className="grid sm:grid-cols-2 gap-3 mb-8">
+                  {quickPrompts.map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleQuickPrompt(item.prompt)}
+                        className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/50 hover:shadow-md transition-all duration-200 text-left"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <Icon className="w-5 h-5 text-primary" />
+                        </div>
+                        <span className="font-medium">{item.text}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                {/* Start Button */}
+                <Button onClick={createNewConversation} size="lg" className="gap-2 shadow-lg">
+                  <Plus className="w-5 h-5" />
+                  Start a New Chat
+                </Button>
+                
+                <p className="text-sm text-muted-foreground mt-6">
+                  Your conversations are saved automatically
+                </p>
               </div>
-              <h2 className="text-2xl font-bold mb-2">Career AI Assistant</h2>
-              <p className="text-muted-foreground text-center max-w-md mb-8">
-                Get expert advice on resumes, interviews, career paths, and professional development.
-              </p>
-              <Button onClick={createNewConversation} size="lg" className="gap-2">
-                <Plus className="w-4 h-4" />
-                Start a Conversation
-              </Button>
             </div>
           )}
         </main>
