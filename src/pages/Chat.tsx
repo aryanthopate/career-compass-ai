@@ -374,7 +374,7 @@ export default function Chat() {
           </div>
           
           {/* Scrollable Conversations List */}
-          <div className="flex-1 overflow-y-auto px-2 py-2">
+          <div className="flex-1 overflow-y-auto px-2 py-2 sidebar-scrollbar">
             {loadingConversations ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -514,7 +514,7 @@ export default function Chat() {
           {currentConversationId || messages.length > 0 ? (
             <>
               {/* Messages with separate scroll */}
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 chat-scrollbar">
                 <div className="max-w-3xl mx-auto space-y-6">
                   {messages.map((msg) => (
                     <ChatMessage key={msg.id} message={msg} />
