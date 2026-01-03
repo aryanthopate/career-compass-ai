@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { jsPDF } from 'jspdf';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +42,7 @@ import {
   AlertTriangle,
   Clock,
   ArrowRight,
+  Download,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -121,6 +123,197 @@ export default function ResumeBuilder() {
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: 'Exported!', description: 'Resume downloaded as JSON file.' });
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4',
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
+    const contentWidth = pageWidth - margin * 2;
+    let y = margin;
+
+    // ATS-friendly fonts (standard fonts that ATS can read)
+    const fontNormal = 'helvetica';
+    
+    // Helper function to add text with word wrap
+    const addWrappedText = (text: string, x: number, maxWidth: number, lineHeight: number) => {
+      const lines = doc.splitTextToSize(text, maxWidth);
+      lines.forEach((line: string) => {
+        if (y > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(line, x, y);
+        y += lineHeight;
+      });
+    };
+
+    // Header - Name (large, bold)
+    doc.setFont(fontNormal, 'bold');
+    doc.setFontSize(18);
+    doc.text(formData.name || 'Your Name', margin, y);
+    y += 20;
+
+    // Contact info (single line, smaller)
+    doc.setFont(fontNormal, 'normal');
+    doc.setFontSize(10);
+    const contactParts = [formData.email, formData.phone, formData.location].filter(Boolean);
+    doc.text(contactParts.join('  |  '), margin, y);
+    y += 20;
+
+    // Divider line
+    doc.setDrawColor(180, 180, 180);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 15;
+
+    // Summary Section
+    if (formData.summary) {
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(11);
+      doc.text('PROFESSIONAL SUMMARY', margin, y);
+      y += 15;
+      
+      doc.setFont(fontNormal, 'normal');
+      doc.setFontSize(10);
+      addWrappedText(formData.summary, margin, contentWidth, 14);
+      y += 8;
+    }
+
+    // Experience Section
+    if (formData.experience && formData.experience.length > 0) {
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(11);
+      doc.text('PROFESSIONAL EXPERIENCE', margin, y);
+      y += 15;
+
+      formData.experience.forEach((exp) => {
+        // Job title and company
+        doc.setFont(fontNormal, 'bold');
+        doc.setFontSize(10);
+        doc.text(`${exp.position}`, margin, y);
+        
+        // Dates on the right
+        const dateText = `${exp.startDate} - ${exp.endDate || 'Present'}`;
+        const dateWidth = doc.getTextWidth(dateText);
+        doc.setFont(fontNormal, 'normal');
+        doc.text(dateText, pageWidth - margin - dateWidth, y);
+        y += 14;
+        
+        // Company
+        doc.setFont(fontNormal, 'italic');
+        doc.text(exp.company, margin, y);
+        y += 14;
+
+        // Description
+        if (exp.description) {
+          doc.setFont(fontNormal, 'normal');
+          addWrappedText(`• ${exp.description}`, margin + 10, contentWidth - 10, 13);
+        }
+
+        // Highlights
+        exp.highlights?.forEach((highlight) => {
+          if (highlight) {
+            doc.setFont(fontNormal, 'normal');
+            addWrappedText(`• ${highlight}`, margin + 10, contentWidth - 10, 13);
+          }
+        });
+        y += 6;
+      });
+    }
+
+    // Education Section
+    if (formData.education && formData.education.length > 0) {
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(11);
+      doc.text('EDUCATION', margin, y);
+      y += 15;
+
+      formData.education.forEach((edu) => {
+        doc.setFont(fontNormal, 'bold');
+        doc.setFontSize(10);
+        doc.text(`${edu.degree} in ${edu.field}`, margin, y);
+        
+        const dateText = `${edu.startDate} - ${edu.endDate}`;
+        const dateWidth = doc.getTextWidth(dateText);
+        doc.setFont(fontNormal, 'normal');
+        doc.text(dateText, pageWidth - margin - dateWidth, y);
+        y += 14;
+        
+        doc.setFont(fontNormal, 'italic');
+        doc.text(edu.institution, margin, y);
+        y += 16;
+      });
+    }
+
+    // Skills Section
+    if (formData.skills && formData.skills.length > 0) {
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(11);
+      doc.text('SKILLS', margin, y);
+      y += 15;
+
+      doc.setFont(fontNormal, 'normal');
+      doc.setFontSize(10);
+      addWrappedText(formData.skills.join('  •  '), margin, contentWidth, 14);
+      y += 8;
+    }
+
+    // Projects Section
+    if (formData.projects && formData.projects.length > 0) {
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(11);
+      doc.text('PROJECTS', margin, y);
+      y += 15;
+
+      formData.projects.forEach((project) => {
+        doc.setFont(fontNormal, 'bold');
+        doc.setFontSize(10);
+        doc.text(project.name, margin, y);
+        y += 14;
+        
+        if (project.description) {
+          doc.setFont(fontNormal, 'normal');
+          addWrappedText(project.description, margin, contentWidth, 13);
+        }
+        
+        if (project.technologies && project.technologies.length > 0) {
+          doc.setFont(fontNormal, 'italic');
+          doc.setFontSize(9);
+          doc.text(`Technologies: ${project.technologies.join(', ')}`, margin, y);
+          y += 14;
+        }
+        y += 4;
+      });
+    }
+
+    // Achievements Section
+    if (formData.achievements && formData.achievements.length > 0) {
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(11);
+      doc.text('ACHIEVEMENTS', margin, y);
+      y += 15;
+
+      doc.setFont(fontNormal, 'normal');
+      doc.setFontSize(10);
+      formData.achievements.forEach((achievement) => {
+        if (achievement) {
+          addWrappedText(`• ${achievement}`, margin, contentWidth, 13);
+        }
+      });
+    }
+
+    // Save PDF
+    doc.save(`${formData.name || 'resume'}-ATS-Friendly.pdf`);
+    toast({ 
+      title: 'PDF Exported!', 
+      description: 'ATS-friendly resume downloaded successfully.' 
+    });
   };
 
   const handleImprove = async (section: string) => {
@@ -207,17 +400,21 @@ export default function ResumeBuilder() {
             <p className="text-muted-foreground mt-1">Create and manage your professional resumes</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={handleExportPDF} className="gap-2 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:border-primary">
+              <Download className="w-4 h-4" />
+              Export PDF (ATS)
+            </Button>
             <Button variant="outline" onClick={handleExportText} className="gap-2">
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               Copy Text
             </Button>
             <Button variant="outline" onClick={handleExportJSON} className="gap-2">
               <FileDown className="w-4 h-4" />
-              Export JSON
+              JSON
             </Button>
             <Button onClick={handleSave} disabled={saving} className="gap-2 shadow-md">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Resume
+              Save
             </Button>
           </div>
         </div>
