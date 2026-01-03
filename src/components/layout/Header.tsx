@@ -11,6 +11,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTheme } from '@/lib/ThemeContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useAdmin } from '@/lib/useAdmin';
@@ -31,6 +32,7 @@ import {
   Info,
   Mail,
   Shield,
+  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -39,31 +41,41 @@ const productItems = [
     path: '/resume-builder', 
     label: 'Resume Builder', 
     icon: FileText,
-    description: 'Create professional resumes with AI assistance'
+    description: 'Create professional resumes with AI assistance',
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
   },
   { 
     path: '/resume-analysis', 
     label: 'Resume Analysis', 
     icon: BarChart3,
-    description: 'Get brutally honest feedback on your resume'
+    description: 'Get brutally honest feedback on your resume',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
   },
   { 
     path: '/skill-gap', 
     label: 'Skill Gap Analysis', 
     icon: Target,
-    description: 'Identify missing skills for your target role'
+    description: 'Identify missing skills for your target role',
+    color: 'text-orange-500',
+    bg: 'bg-orange-500/10',
   },
   { 
     path: '/interview', 
     label: 'Mock Interview', 
     icon: MessageSquare,
-    description: 'Practice interviews with AI feedback'
+    description: 'Practice interviews with AI feedback',
+    color: 'text-pink-500',
+    bg: 'bg-pink-500/10',
   },
   { 
     path: '/career-verdict', 
     label: 'Career Verdict', 
     icon: Compass,
-    description: 'Get your overall career readiness score'
+    description: 'Get your overall career readiness score',
+    color: 'text-violet-500',
+    bg: 'bg-violet-500/10',
   },
 ];
 
@@ -80,15 +92,20 @@ export function Header() {
     navigate('/');
   };
 
+  const getInitials = (email: string | undefined) => {
+    if (!email) return 'U';
+    return email[0].toUpperCase();
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to={user ? '/resume-builder' : '/'} className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+        <Link to={user ? '/resume-builder' : '/'} className="flex items-center gap-2.5 group">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
             <Compass className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-lg hidden sm:block">Career Reality Engine</span>
+          <span className="font-bold text-lg hidden sm:block">Career Reality</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -96,23 +113,23 @@ export function Header() {
           {/* Products Dropdown */}
           <HoverCard openDelay={0} closeDelay={100}>
             <HoverCardTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1">
+              <Button variant="ghost" size="sm" className="gap-1.5">
                 Products
                 <ChevronDown className="w-4 h-4" />
               </Button>
             </HoverCardTrigger>
-            <HoverCardContent className="w-80 p-2" align="start">
+            <HoverCardContent className="w-96 p-3" align="start">
               <div className="grid gap-1">
                 {productItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.path;
                   return (
                     <Link key={item.path} to={item.path}>
-                      <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                        isActive ? 'bg-secondary' : 'hover:bg-secondary/50'
+                      <div className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-200 ${
+                        isActive ? 'bg-primary/10' : 'hover:bg-secondary'
                       }`}>
-                        <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-4 h-4 text-primary" />
+                        <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-5 h-5 ${item.color}`} />
                         </div>
                         <div>
                           <p className="font-medium text-sm">{item.label}</p>
@@ -131,7 +148,7 @@ export function Header() {
             <Button 
               variant={location.pathname === '/chat' ? 'secondary' : 'ghost'} 
               size="sm" 
-              className="gap-1"
+              className="gap-1.5"
             >
               <Bot className="w-4 h-4" />
               AI Chats
@@ -143,7 +160,7 @@ export function Header() {
             <Button 
               variant={location.pathname === '/about' ? 'secondary' : 'ghost'} 
               size="sm" 
-              className="gap-1"
+              className="gap-1.5"
             >
               <Info className="w-4 h-4" />
               About
@@ -155,7 +172,7 @@ export function Header() {
             <Button 
               variant={location.pathname === '/contact' ? 'secondary' : 'ghost'} 
               size="sm" 
-              className="gap-1"
+              className="gap-1.5"
             >
               <Mail className="w-4 h-4" />
               Contact
@@ -168,7 +185,7 @@ export function Header() {
               <Button 
                 variant={location.pathname.startsWith('/admin') ? 'secondary' : 'ghost'} 
                 size="sm" 
-                className="gap-1 text-destructive"
+                className="gap-1.5 text-destructive"
               >
                 <Shield className="w-4 h-4" />
                 Admin
@@ -194,15 +211,37 @@ export function Header() {
 
           {user ? (
             <>
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary">
-                <User className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground truncate max-w-32">
-                  {user.email}
-                </span>
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                <LogOut className="w-5 h-5" />
-              </Button>
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2 pl-2 pr-3">
+                    <Avatar className="w-7 h-7">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                        {getInitials(user.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline text-sm max-w-32 truncate">
+                      {user.email}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => navigate('/profile')} className="gap-2">
+                    <User className="w-4 h-4" />
+                    My Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/profile?tab=settings')} className="gap-2">
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -214,7 +253,7 @@ export function Header() {
             </>
           ) : (
             <Link to="/auth">
-              <Button variant="default" size="sm">
+              <Button size="sm" className="shadow-sm">
                 Get Started
               </Button>
             </Link>
@@ -240,9 +279,11 @@ export function Header() {
                 >
                   <Button
                     variant={isActive ? 'secondary' : 'ghost'}
-                    className="w-full justify-start"
+                    className="w-full justify-start gap-3"
                   >
-                    <Icon className="w-4 h-4 mr-2" />
+                    <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center`}>
+                      <Icon className={`w-4 h-4 ${item.color}`} />
+                    </div>
                     {item.label}
                   </Button>
                 </Link>
@@ -252,20 +293,26 @@ export function Header() {
             <div className="h-px bg-border my-2" />
             
             <Link to="/chat" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={location.pathname === '/chat' ? 'secondary' : 'ghost'} className="w-full justify-start">
-                <Bot className="w-4 h-4 mr-2" />
+              <Button variant={location.pathname === '/chat' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
+                <Bot className="w-4 h-4" />
                 AI Chats
               </Button>
             </Link>
+            <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant={location.pathname === '/profile' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
+                <User className="w-4 h-4" />
+                My Profile
+              </Button>
+            </Link>
             <Link to="/about" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={location.pathname === '/about' ? 'secondary' : 'ghost'} className="w-full justify-start">
-                <Info className="w-4 h-4 mr-2" />
+              <Button variant={location.pathname === '/about' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
+                <Info className="w-4 h-4" />
                 About
               </Button>
             </Link>
             <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={location.pathname === '/contact' ? 'secondary' : 'ghost'} className="w-full justify-start">
-                <Mail className="w-4 h-4 mr-2" />
+              <Button variant={location.pathname === '/contact' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
+                <Mail className="w-4 h-4" />
                 Contact
               </Button>
             </Link>
@@ -274,8 +321,8 @@ export function Header() {
               <>
                 <div className="h-px bg-border my-2" />
                 <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start text-destructive">
-                    <Shield className="w-4 h-4 mr-2" />
+                  <Button variant="ghost" className="w-full justify-start gap-2 text-destructive">
+                    <Shield className="w-4 h-4" />
                     Admin Panel
                   </Button>
                 </Link>
