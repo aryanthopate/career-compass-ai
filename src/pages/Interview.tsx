@@ -54,7 +54,7 @@ export default function Interview() {
     scrollToBottom();
   }, [currentInterview?.messages]);
 
-  const startInterview = () => {
+  const startInterview = async () => {
     const firstQuestion =
       interviewQuestions.behavioral[0];
 
@@ -70,12 +70,10 @@ export default function Interview() {
       evaluation: null,
     };
 
-    const saved = saveInterviewAttempt(newInterview);
-    setCurrentInterview({
-      ...newInterview,
-      id: saved.id,
-      createdAt: saved.createdAt,
-    } as InterviewAttempt);
+    const saved = await saveInterviewAttempt(newInterview);
+    if (saved) {
+      setCurrentInterview(saved);
+    }
     setQuestionIndex(0);
   };
 

@@ -7,8 +7,8 @@ import { FileText, Plus, Clock } from 'lucide-react';
 export default function ResumeBuilder() {
   const { resumes, currentResume, setCurrentResume, saveResume } = useResume();
 
-  const createNewResume = () => {
-    saveResume({
+  const createNewResume = async () => {
+    await saveResume({
       name: '',
       email: '',
       phone: '',

@@ -14,7 +14,242 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      career_verdicts: {
+        Row: {
+          created_at: string
+          hiring_probability: number
+          id: string
+          interview_readiness: number
+          next_actions: string[] | null
+          recommended_roles: string[] | null
+          resume_readiness: number
+          roles_to_avoid: string[] | null
+          salary_range: Json | null
+          skill_readiness: number
+          top_risks: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hiring_probability?: number
+          id?: string
+          interview_readiness?: number
+          next_actions?: string[] | null
+          recommended_roles?: string[] | null
+          resume_readiness?: number
+          roles_to_avoid?: string[] | null
+          salary_range?: Json | null
+          skill_readiness?: number
+          top_risks?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hiring_probability?: number
+          id?: string
+          interview_readiness?: number
+          next_actions?: string[] | null
+          recommended_roles?: string[] | null
+          resume_readiness?: number
+          roles_to_avoid?: string[] | null
+          salary_range?: Json | null
+          skill_readiness?: number
+          top_risks?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      interview_attempts: {
+        Row: {
+          created_at: string
+          evaluation: Json | null
+          experience_level: string
+          id: string
+          messages: Json | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          evaluation?: Json | null
+          experience_level: string
+          id?: string
+          messages?: Json | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          evaluation?: Json | null
+          experience_level?: string
+          id?: string
+          messages?: Json | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resume_analyses: {
+        Row: {
+          ats_score: number
+          created_at: string
+          id: string
+          resume_id: string | null
+          role_mismatch: string[] | null
+          score: number
+          skill_inflation: string[] | null
+          strength_areas: string[] | null
+          suggestions: string[] | null
+          user_id: string
+          weaknesses: string[] | null
+        }
+        Insert: {
+          ats_score?: number
+          created_at?: string
+          id?: string
+          resume_id?: string | null
+          role_mismatch?: string[] | null
+          score?: number
+          skill_inflation?: string[] | null
+          strength_areas?: string[] | null
+          suggestions?: string[] | null
+          user_id: string
+          weaknesses?: string[] | null
+        }
+        Update: {
+          ats_score?: number
+          created_at?: string
+          id?: string
+          resume_id?: string | null
+          role_mismatch?: string[] | null
+          score?: number
+          skill_inflation?: string[] | null
+          strength_areas?: string[] | null
+          suggestions?: string[] | null
+          user_id?: string
+          weaknesses?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_analyses_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resumes: {
+        Row: {
+          achievements: string[] | null
+          created_at: string
+          education: Json | null
+          email: string | null
+          experience: Json | null
+          id: string
+          location: string | null
+          name: string | null
+          phone: string | null
+          projects: Json | null
+          skills: string[] | null
+          summary: string | null
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          achievements?: string[] | null
+          created_at?: string
+          education?: Json | null
+          email?: string | null
+          experience?: Json | null
+          id?: string
+          location?: string | null
+          name?: string | null
+          phone?: string | null
+          projects?: Json | null
+          skills?: string[] | null
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          achievements?: string[] | null
+          created_at?: string
+          education?: Json | null
+          email?: string | null
+          experience?: Json | null
+          id?: string
+          location?: string | null
+          name?: string | null
+          phone?: string | null
+          projects?: Json | null
+          skills?: string[] | null
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      skill_gaps: {
+        Row: {
+          created_at: string
+          experience_level: string
+          id: string
+          missing_skills: Json | null
+          readiness_score: number
+          target_role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          experience_level: string
+          id?: string
+          missing_skills?: Json | null
+          readiness_score?: number
+          target_role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          experience_level?: string
+          id?: string
+          missing_skills?: Json | null
+          readiness_score?: number
+          target_role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
