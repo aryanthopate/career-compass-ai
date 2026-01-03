@@ -5,13 +5,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useTheme } from '@/lib/ThemeContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useAdmin } from '@/lib/useAdmin';
@@ -32,6 +33,7 @@ import {
   Home,
   Shield,
   Settings,
+  HelpCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -100,7 +102,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to={user ? '/resume-builder' : '/'} className="flex items-center gap-2.5 group">
+        <Link to="/" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
             <Compass className="w-5 h-5 text-primary-foreground" />
           </div>
@@ -109,6 +111,18 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-1">
+          {/* Home */}
+          <Link to="/">
+            <Button 
+              variant={location.pathname === '/' ? 'secondary' : 'ghost'} 
+              size="sm" 
+              className="gap-1.5"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </Button>
+          </Link>
+
           {/* Products Dropdown */}
           <HoverCard openDelay={0} closeDelay={100}>
             <HoverCardTrigger asChild>
@@ -151,30 +165,6 @@ export function Header() {
             >
               <Bot className="w-4 h-4" />
               AI Chats
-            </Button>
-          </Link>
-
-          {/* About */}
-          <Link to="/about">
-            <Button 
-              variant={location.pathname === '/about' ? 'secondary' : 'ghost'} 
-              size="sm" 
-              className="gap-1.5"
-            >
-              <Info className="w-4 h-4" />
-              About
-            </Button>
-          </Link>
-
-          {/* Contact */}
-          <Link to="/contact">
-            <Button 
-              variant={location.pathname === '/contact' ? 'secondary' : 'ghost'} 
-              size="sm" 
-              className="gap-1.5"
-            >
-              <Mail className="w-4 h-4" />
-              Contact
             </Button>
           </Link>
 
@@ -234,6 +224,7 @@ export function Header() {
                     <Settings className="w-4 h-4" />
                     Settings
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive focus:text-destructive">
                     <LogOut className="w-4 h-4" />
                     Sign Out
@@ -264,6 +255,15 @@ export function Header() {
       {user && mobileMenuOpen && (
         <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
           <nav className="container py-4 flex flex-col gap-2">
+            <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant={location.pathname === '/' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
+                <Home className="w-4 h-4" />
+                Home
+              </Button>
+            </Link>
+            
+            <div className="h-px bg-border my-2" />
+            
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-1">
               Products
             </p>
@@ -301,18 +301,6 @@ export function Header() {
               <Button variant={location.pathname === '/profile' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
                 <User className="w-4 h-4" />
                 My Profile
-              </Button>
-            </Link>
-            <Link to="/about" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={location.pathname === '/about' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
-                <Info className="w-4 h-4" />
-                About
-              </Button>
-            </Link>
-            <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={location.pathname === '/contact' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
-                <Mail className="w-4 h-4" />
-                Contact
               </Button>
             </Link>
             
