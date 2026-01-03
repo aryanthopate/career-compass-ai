@@ -24,6 +24,7 @@ import Contact from "./pages/Contact";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminContacts from "./pages/admin/AdminContacts";
 import AdminGames from "./pages/admin/AdminGames";
 import AdminSettings from "./pages/admin/AdminSettings";
 import NotFound from "./pages/NotFound";
@@ -45,11 +46,28 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function FloatingElements() {
   const location = useLocation();
-  const hiddenPaths = ['/chat', '/admin', '/auth', '/'];
-  const shouldHide = hiddenPaths.some(path => 
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
-  );
+  // Hide floating elements on these paths
+  const hiddenPaths = [
+    '/',           // Landing page
+    '/chat',       // Chat page (has its own interface)
+    '/admin',      // Admin pages
+    '/auth',       // Auth page
+    '/resume-builder',
+    '/resume-analysis', 
+    '/skill-gap',
+    '/interview',
+    '/career-verdict',
+    '/games',
+    '/profile',
+  ];
+  
+  const shouldHide = hiddenPaths.some(path => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  });
+  
   if (shouldHide) return null;
+  
   return (
     <>
       <FloatingChat />
@@ -78,6 +96,7 @@ function AppContent() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminOverview />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="contacts" element={<AdminContacts />} />
           <Route path="games" element={<AdminGames />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
