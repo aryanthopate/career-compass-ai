@@ -41,10 +41,7 @@ import {
   BarChart3,
   Target,
   MessageSquare,
-  Award,
   Clock,
-  CheckCircle,
-  XCircle,
   RefreshCw,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -132,7 +129,6 @@ export default function AdminUsers() {
     setLoadingDetails(true);
     
     try {
-      // Fetch user's data counts
       const [resumesRes, analysesRes, skillGapsRes, interviewsRes] = await Promise.all([
         supabase.from('resumes').select('id', { count: 'exact' }).eq('user_id', user.user_id),
         supabase.from('resume_analyses').select('id', { count: 'exact' }).eq('user_id', user.user_id),
@@ -167,7 +163,8 @@ export default function AdminUsers() {
 
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const userStats = {
@@ -178,77 +175,77 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 md:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage users, roles, and view user data</p>
+          <h1 className="text-2xl md:text-3xl font-bold">User Management</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Manage users, roles, and view user data</p>
         </div>
-        <Button onClick={fetchUsers} variant="outline" className="gap-2">
+        <Button onClick={fetchUsers} variant="outline" className="gap-2 w-full sm:w-auto">
           <RefreshCw className="w-4 h-4" />
           Refresh
         </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="glass-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+          <CardContent className="p-3 md:p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
               <User className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{userStats.total}</p>
-              <p className="text-sm text-muted-foreground">Total Users</p>
+              <p className="text-xl md:text-2xl font-bold">{userStats.total}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Total Users</p>
             </div>
           </CardContent>
         </Card>
         <Card className="glass-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+          <CardContent className="p-3 md:p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
               <Shield className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{userStats.admins}</p>
-              <p className="text-sm text-muted-foreground">Admins</p>
+              <p className="text-xl md:text-2xl font-bold">{userStats.admins}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Admins</p>
             </div>
           </CardContent>
         </Card>
         <Card className="glass-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+          <CardContent className="p-3 md:p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
               <UserCog className="w-5 h-5 text-orange-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{userStats.moderators}</p>
-              <p className="text-sm text-muted-foreground">Moderators</p>
+              <p className="text-xl md:text-2xl font-bold">{userStats.moderators}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Moderators</p>
             </div>
           </CardContent>
         </Card>
         <Card className="glass-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+          <CardContent className="p-3 md:p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
               <User className="w-5 h-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{userStats.regularUsers}</p>
-              <p className="text-sm text-muted-foreground">Regular Users</p>
+              <p className="text-xl md:text-2xl font-bold">{userStats.regularUsers}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Regular Users</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
       <Card className="glass-card">
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>All Users</CardTitle>
               <CardDescription>View and manage all registered users</CardDescription>
             </div>
-            <div className="relative w-64">
+            <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search users..."
+                placeholder="Search users or roles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -262,81 +259,160 @@ export default function AdminUsers() {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
-            <ScrollArea className="h-[500px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="w-20">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-muted/50">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
-                            {user.avatar_url ? (
-                              <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-sm font-medium text-primary">
-                                {user.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
-                              </span>
-                            )}
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <ScrollArea className="h-[500px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead className="w-20">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.map((user) => (
+                        <TableRow key={user.id} className="hover:bg-muted/50">
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {user.avatar_url ? (
+                                  <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-sm font-medium text-primary">
+                                    {user.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="font-medium truncate max-w-[150px]">{user.full_name || 'No name'}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground truncate max-w-[200px]">
+                            {user.email || 'No email'}
+                          </TableCell>
+                          <TableCell>{getRoleBadge(user.role)}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => viewUserDetails(user)}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'admin')}>
+                                  <Shield className="w-4 h-4 mr-2 text-red-500" />
+                                  Make Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'moderator')}>
+                                  <UserCog className="w-4 h-4 mr-2 text-orange-500" />
+                                  Make Moderator
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'user')}>
+                                  <User className="w-4 h-4 mr-2" />
+                                  Make User
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                <ScrollArea className="h-[60vh]">
+                  <div className="space-y-3 pr-2">
+                    {filteredUsers.map((user) => (
+                      <Card key={user.id} className="border border-border">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {user.avatar_url ? (
+                                  <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-lg font-bold text-primary">
+                                    {user.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold truncate">{user.full_name || 'No name'}</p>
+                                <p className="text-sm text-muted-foreground truncate">{user.email || 'No email'}</p>
+                              </div>
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => viewUserDetails(user)}>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'admin')}>
+                                  <Shield className="w-4 h-4 mr-2 text-red-500" />
+                                  Make Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'moderator')}>
+                                  <UserCog className="w-4 h-4 mr-2 text-orange-500" />
+                                  Make Moderator
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'user')}>
+                                  <User className="w-4 h-4 mr-2" />
+                                  Make User
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-                          <span className="font-medium">{user.full_name || 'No name'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {user.email || 'No email'}
-                      </TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={() => viewUserDetails(user)}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'admin')}>
-                              <Shield className="w-4 h-4 mr-2 text-red-500" />
-                              Make Admin
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'moderator')}>
-                              <UserCog className="w-4 h-4 mr-2 text-orange-500" />
-                              Make Moderator
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateUserRole(user.user_id, 'user')}>
-                              <User className="w-4 h-4 mr-2" />
-                              Make User
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
+                          
+                          <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                            <div className="flex items-center gap-2">
+                              {getRoleBadge(user.role)}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(user.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+
+              {filteredUsers.length === 0 && (
+                <div className="text-center py-12">
+                  <User className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">No users found</p>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* User Details Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5" />
@@ -351,22 +427,22 @@ export default function AdminUsers() {
             <div className="space-y-6 py-4">
               {/* User Info */}
               <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
-                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {selectedUser.avatar_url ? (
                     <img src={selectedUser.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-2xl font-bold text-primary">
+                    <span className="text-xl md:text-2xl font-bold text-primary">
                       {selectedUser.full_name?.[0]?.toUpperCase() || selectedUser.email?.[0]?.toUpperCase() || 'U'}
                     </span>
                   )}
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{selectedUser.full_name || 'No name'}</h3>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Mail className="w-3.5 h-3.5" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold truncate">{selectedUser.full_name || 'No name'}</h3>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
+                    <Mail className="w-3.5 h-3.5 flex-shrink-0" />
                     {selectedUser.email}
                   </p>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     {getRoleBadge(selectedUser.role)}
                     <Badge variant="outline" className="gap-1">
                       <Calendar className="w-3 h-3" />

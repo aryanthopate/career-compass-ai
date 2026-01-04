@@ -12,6 +12,14 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useTheme } from '@/lib/ThemeContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -20,7 +28,6 @@ import {
   Moon,
   Sun,
   Menu,
-  X,
   FileText,
   BarChart3,
   Target,
@@ -33,8 +40,8 @@ import {
   Home,
   Shield,
   Settings,
-  HelpCircle,
   Gamepad2,
+  ChevronRight,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -100,12 +107,15 @@ export function Header() {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+    setMobileMenuOpen(false);
   };
 
   const getInitials = (email: string | undefined) => {
     if (!email) return 'U';
     return email[0].toUpperCase();
   };
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -209,16 +219,16 @@ export function Header() {
 
           {user ? (
             <>
-              {/* User Menu */}
+              {/* User Menu - Desktop */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 pl-2 pr-3">
+                  <Button variant="ghost" className="gap-2 pl-2 pr-3 hidden sm:flex">
                     <Avatar className="w-7 h-7">
                       <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                         {getInitials(user.email)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden sm:inline text-sm max-w-32 truncate">
+                    <span className="hidden md:inline text-sm max-w-32 truncate">
                       {user.email}
                     </span>
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -241,92 +251,170 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </Button>
+              {/* Mobile Drawer */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="lg:hidden">
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0">
+                  <SheetHeader className="p-6 pb-4 border-b">
+                    <SheetTitle className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                          {getInitials(user.email)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-left">
+                        <p className="font-medium text-sm">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">Welcome back!</p>
+                      </div>
+                    </SheetTitle>
+                  </SheetHeader>
+                  
+                  <ScrollArea className="h-[calc(100vh-180px)]">
+                    <div className="p-4 space-y-2">
+                      {/* Home */}
+                      <Link to="/" onClick={closeMobileMenu}>
+                        <Button variant={location.pathname === '/' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-12">
+                          <Home className="w-5 h-5" />
+                          Home
+                          <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                        </Button>
+                      </Link>
+
+                      <div className="py-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
+                          Products
+                        </p>
+                        {productItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <Link key={item.path} to={item.path} onClick={closeMobileMenu}>
+                              <Button
+                                variant={isActive ? 'secondary' : 'ghost'}
+                                className="w-full justify-start gap-3 h-12 mb-1"
+                              >
+                                <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center`}>
+                                  <Icon className={`w-4 h-4 ${item.color}`} />
+                                </div>
+                                <span className="flex-1 text-left">{item.label}</span>
+                                <ChevronRight className="w-4 h-4 opacity-50" />
+                              </Button>
+                            </Link>
+                          );
+                        })}
+                      </div>
+
+                      <div className="h-px bg-border" />
+
+                      {/* AI Chats */}
+                      <Link to="/chat" onClick={closeMobileMenu}>
+                        <Button variant={location.pathname === '/chat' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-12">
+                          <Bot className="w-5 h-5" />
+                          AI Chats
+                          <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                        </Button>
+                      </Link>
+
+                      {/* Profile */}
+                      <Link to="/profile" onClick={closeMobileMenu}>
+                        <Button variant={location.pathname === '/profile' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-12">
+                          <User className="w-5 h-5" />
+                          My Profile
+                          <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                        </Button>
+                      </Link>
+
+                      {/* Settings */}
+                      <Link to="/profile?tab=settings" onClick={closeMobileMenu}>
+                        <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                          <Settings className="w-5 h-5" />
+                          Settings
+                          <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                        </Button>
+                      </Link>
+
+                      {/* Admin */}
+                      {isAdmin && (
+                        <>
+                          <div className="h-px bg-border my-2" />
+                          <Link to="/admin" onClick={closeMobileMenu}>
+                            <Button variant="ghost" className="w-full justify-start gap-3 h-12 text-destructive hover:text-destructive">
+                              <Shield className="w-5 h-5" />
+                              Admin Panel
+                              <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                            </Button>
+                          </Link>
+                        </>
+                      )}
+                    </div>
+                  </ScrollArea>
+
+                  {/* Bottom Sign Out */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
+                    <Button variant="outline" onClick={handleSignOut} className="w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive/10">
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </>
           ) : (
-            <Link to="/auth">
-              <Button size="sm" className="shadow-sm">
-                Get Started
-              </Button>
-            </Link>
+            <>
+              {/* Mobile Menu for non-logged in users */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="lg:hidden">
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] p-0">
+                  <SheetHeader className="p-6 pb-4 border-b">
+                    <SheetTitle>Menu</SheetTitle>
+                  </SheetHeader>
+                  <div className="p-4 space-y-2">
+                    <Link to="/" onClick={closeMobileMenu}>
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+                        <Home className="w-5 h-5" />
+                        Home
+                      </Button>
+                    </Link>
+                    <div className="py-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">Products</p>
+                      {productItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Link key={item.path} to={item.path} onClick={closeMobileMenu}>
+                            <Button variant="ghost" className="w-full justify-start gap-3 h-11 mb-1">
+                              <Icon className={`w-4 h-4 ${item.color}`} />
+                              {item.label}
+                            </Button>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
+                    <Link to="/auth" onClick={closeMobileMenu}>
+                      <Button className="w-full">Get Started</Button>
+                    </Link>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              <Link to="/auth" className="hidden lg:block">
+                <Button size="sm" className="shadow-sm">
+                  Get Started
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       </div>
-
-      {/* Mobile Navigation */}
-      {user && mobileMenuOpen && (
-        <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
-          <nav className="container py-4 flex flex-col gap-2">
-            <Link to="/" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={location.pathname === '/' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
-                <Home className="w-4 h-4" />
-                Home
-              </Button>
-            </Link>
-            
-            <div className="h-px bg-border my-2" />
-            
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-1">
-              Products
-            </p>
-            {productItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Button
-                    variant={isActive ? 'secondary' : 'ghost'}
-                    className="w-full justify-start gap-3"
-                  >
-                    <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center`}>
-                      <Icon className={`w-4 h-4 ${item.color}`} />
-                    </div>
-                    {item.label}
-                  </Button>
-                </Link>
-              );
-            })}
-            
-            <div className="h-px bg-border my-2" />
-            
-            <Link to="/chat" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={location.pathname === '/chat' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
-                <Bot className="w-4 h-4" />
-                AI Chats
-              </Button>
-            </Link>
-            <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={location.pathname === '/profile' ? 'secondary' : 'ghost'} className="w-full justify-start gap-2">
-                <User className="w-4 h-4" />
-                My Profile
-              </Button>
-            </Link>
-            
-            {isAdmin && (
-              <>
-                <div className="h-px bg-border my-2" />
-                <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start gap-2 text-destructive">
-                    <Shield className="w-4 h-4" />
-                    Admin Panel
-                  </Button>
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
     </header>
   );
 }
