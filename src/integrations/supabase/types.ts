@@ -395,14 +395,17 @@ export type Database = {
       resumes: {
         Row: {
           achievements: string[] | null
+          certifications: Json | null
           created_at: string
           education: Json | null
           email: string | null
           experience: Json | null
           id: string
+          links: Json | null
           location: string | null
           name: string | null
           phone: string | null
+          portfolio_link: string | null
           projects: Json | null
           skills: string[] | null
           summary: string | null
@@ -412,14 +415,17 @@ export type Database = {
         }
         Insert: {
           achievements?: string[] | null
+          certifications?: Json | null
           created_at?: string
           education?: Json | null
           email?: string | null
           experience?: Json | null
           id?: string
+          links?: Json | null
           location?: string | null
           name?: string | null
           phone?: string | null
+          portfolio_link?: string | null
           projects?: Json | null
           skills?: string[] | null
           summary?: string | null
@@ -429,14 +435,17 @@ export type Database = {
         }
         Update: {
           achievements?: string[] | null
+          certifications?: Json | null
           created_at?: string
           education?: Json | null
           email?: string | null
           experience?: Json | null
           id?: string
+          links?: Json | null
           location?: string | null
           name?: string | null
           phone?: string | null
+          portfolio_link?: string | null
           projects?: Json | null
           skills?: string[] | null
           summary?: string | null

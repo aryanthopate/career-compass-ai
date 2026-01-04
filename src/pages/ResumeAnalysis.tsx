@@ -1,10 +1,18 @@
 import { useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useResume } from '@/lib/ResumeContext';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useResume, Resume } from '@/lib/ResumeContext';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart3,
@@ -19,20 +27,37 @@ import {
   Sparkles,
   ArrowRight,
   RefreshCw,
+  Zap,
+  Shield,
+  Eye,
+  Clock,
+  Award,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export default function ResumeAnalysis() {
-  const { currentResume, analyses, saveAnalysis } = useResume();
+  const { resumes, currentResume, analyses, saveAnalysis, setCurrentResume } = useResume();
   const [analyzing, setAnalyzing] = useState(false);
-  const latestAnalysis = analyses[analyses.length - 1];
+  const [selectedResumeId, setSelectedResumeId] = useState<string>(currentResume?.id || '');
   const navigate = useNavigate();
 
+  const selectedResume = resumes.find(r => r.id === selectedResumeId) || currentResume;
+  const latestAnalysis = analyses.find(a => a.resumeId === selectedResumeId) || analyses[analyses.length - 1];
+
+  const handleResumeSelect = (resumeId: string) => {
+    setSelectedResumeId(resumeId);
+    const resume = resumes.find(r => r.id === resumeId);
+    if (resume) {
+      setCurrentResume(resume);
+    }
+  };
+
   const runAnalysis = async () => {
-    if (!currentResume) {
+    if (!selectedResume) {
       toast({
-        title: 'No resume found',
-        description: 'Please create a resume first.',
+        title: 'No resume selected',
+        description: 'Please select a resume to analyze.',
         variant: 'destructive',
       });
       return;
@@ -41,39 +66,59 @@ export default function ResumeAnalysis() {
     setAnalyzing(true);
     await new Promise((resolve) => setTimeout(resolve, 2500));
 
-    const hasExperience = (currentResume.experience?.length || 0) > 0;
-    const hasProjects = (currentResume.projects?.length || 0) > 0;
-    const hasSkills = (currentResume.skills?.length || 0) > 0;
-    const hasSummary = !!currentResume.summary;
+    const hasExperience = (selectedResume.experience?.length || 0) > 0;
+    const hasProjects = (selectedResume.projects?.length || 0) > 0;
+    const hasSkills = (selectedResume.skills?.length || 0) > 0;
+    const hasSummary = !!selectedResume.summary;
+    const hasCertifications = (selectedResume.certifications?.length || 0) > 0;
+    const hasLinks = !!selectedResume.portfolioLink || (selectedResume.links?.length || 0) > 0;
+    const hasEducation = (selectedResume.education?.length || 0) > 0;
 
-    let score = 50;
-    if (hasExperience) score += 15;
+    let score = 35;
+    if (hasExperience) score += 20;
     if (hasProjects) score += 15;
     if (hasSkills) score += 10;
     if (hasSummary) score += 10;
+    if (hasCertifications) score += 5;
+    if (hasLinks) score += 3;
+    if (hasEducation) score += 7;
+
+    // Experience quality bonus
+    if (selectedResume.experience?.some(e => e.highlights && e.highlights.length > 0)) {
+      score += 5;
+    }
+
+    score = Math.min(score, 100);
 
     const mockAnalysis = {
-      resumeId: currentResume.id,
+      resumeId: selectedResume.id,
       score,
-      atsScore: Math.max(40, score - 10),
+      atsScore: Math.max(40, score - 5),
       strengthAreas: [
-        hasSkills ? 'Technical skills are clearly listed' : null,
-        hasProjects ? 'Project section demonstrates hands-on experience' : null,
-        currentResume.education?.length ? 'Education credentials are properly formatted' : null,
+        hasSkills ? 'Technical skills are clearly categorized and listed' : null,
+        hasProjects ? 'Project section demonstrates practical hands-on experience' : null,
+        hasEducation ? 'Education credentials are properly formatted for ATS' : null,
+        hasSummary ? 'Professional summary captures key qualifications' : null,
+        hasLinks ? 'Portfolio/links provide additional credibility' : null,
+        hasCertifications ? 'Certifications add professional value' : null,
       ].filter(Boolean) as string[],
       weaknesses: [
-        !hasSummary ? 'Missing professional summary - critical for first impressions' : null,
-        !hasExperience ? 'No work experience listed - consider adding internships or part-time work' : null,
-        (currentResume.skills?.length || 0) < 5 ? 'Skills section could be more comprehensive' : null,
-        !hasProjects ? 'No projects listed - crucial for fresh graduates' : null,
+        !hasSummary ? 'Missing professional summary - critical for first impressions and ATS' : null,
+        !hasExperience ? 'No work experience listed - consider adding internships or freelance work' : null,
+        (selectedResume.skills?.length || 0) < 5 ? 'Skills section needs to be more comprehensive for better ATS matching' : null,
+        !hasProjects ? 'No projects listed - crucial for demonstrating practical skills' : null,
+        !hasLinks ? 'No portfolio or professional links - add LinkedIn, GitHub, or portfolio' : null,
+        !hasCertifications ? 'No certifications listed - consider adding relevant credentials' : null,
       ].filter(Boolean) as string[],
       suggestions: [
-        'Add quantifiable achievements (e.g., "Improved performance by 40%")',
-        'Include relevant keywords for ATS optimization',
-        'Consider adding a GitHub or portfolio link',
-        'Use action verbs at the start of each bullet point',
+        'Add quantifiable achievements (e.g., "Increased sales by 35%", "Reduced costs by $50K")',
+        'Include industry-specific keywords for better ATS optimization',
+        'Use action verbs like "Led", "Achieved", "Developed" at the start of bullet points',
+        'Ensure consistent date formatting throughout the resume',
+        'Add a portfolio link or GitHub profile to showcase your work',
+        'Consider adding relevant certifications for your target role',
       ],
-      skillInflation: hasSkills && (currentResume.skills?.length || 0) > 15
+      skillInflation: hasSkills && (selectedResume.skills?.length || 0) > 15
         ? ['You list many skills - ensure you can demonstrate proficiency in interviews']
         : [],
       roleMismatch: [],
@@ -81,116 +126,164 @@ export default function ResumeAnalysis() {
 
     saveAnalysis(mockAnalysis);
     setAnalyzing(false);
-    toast({ title: 'Analysis Complete', description: `Your resume scored ${score}/100` });
+    toast({ title: 'Analysis Complete', description: `Your resume "${selectedResume.name || 'Untitled'}" scored ${score}/100` });
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-score-excellent';
-    if (score >= 60) return 'text-score-good';
-    if (score >= 40) return 'text-score-average';
-    return 'text-score-poor';
+    if (score >= 80) return 'text-emerald-500';
+    if (score >= 60) return 'text-blue-500';
+    if (score >= 40) return 'text-amber-500';
+    return 'text-red-500';
   };
 
   const getScoreGradient = (score: number) => {
     if (score >= 80) return 'from-emerald-500 to-teal-500';
     if (score >= 60) return 'from-blue-500 to-indigo-500';
-    if (score >= 40) return 'from-orange-500 to-amber-500';
+    if (score >= 40) return 'from-amber-500 to-orange-500';
     return 'from-red-500 to-rose-500';
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Fair';
+    return 'Needs Work';
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container py-8 max-w-5xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <main className="container py-8 max-w-6xl">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-white" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg">
+                <BarChart3 className="w-6 h-6 text-white" />
               </div>
-              Resume Reality Analyzer
+              Resume Analyzer
             </h1>
             <p className="text-muted-foreground mt-2">
-              Get brutally honest AI feedback on your resume
+              Get AI-powered feedback and ATS compatibility scores
             </p>
           </div>
-          <Button onClick={runAnalysis} disabled={analyzing || !currentResume} size="lg" className="gap-2">
-            {analyzing ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : latestAnalysis ? (
-              <RefreshCw className="w-5 h-5" />
-            ) : (
-              <Sparkles className="w-5 h-5" />
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Resume Selector */}
+            {resumes.length > 0 && (
+              <Select value={selectedResumeId} onValueChange={handleResumeSelect}>
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="Select resume to analyze" />
+                </SelectTrigger>
+                <SelectContent>
+                  {resumes.map((resume) => (
+                    <SelectItem key={resume.id} value={resume.id}>
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        <span>{resume.name || 'Untitled'}</span>
+                        <Badge variant="outline" className="ml-2 text-xs">v{resume.version}</Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            {analyzing ? 'Analyzing...' : latestAnalysis ? 'Re-Analyze' : 'Analyze Resume'}
-          </Button>
+
+            <Button 
+              onClick={runAnalysis} 
+              disabled={analyzing || resumes.length === 0} 
+              size="lg" 
+              className="gap-2 shadow-md"
+            >
+              {analyzing ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : latestAnalysis ? (
+                <RefreshCw className="w-5 h-5" />
+              ) : (
+                <Zap className="w-5 h-5" />
+              )}
+              {analyzing ? 'Analyzing...' : latestAnalysis ? 'Re-Analyze' : 'Analyze Now'}
+            </Button>
+          </div>
         </div>
 
-        {!currentResume && (
+        {/* No Resumes State */}
+        {resumes.length === 0 && (
           <Card className="glass-card">
             <CardContent className="p-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
-                <FileText className="w-8 h-8 text-muted-foreground" />
+              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
+                <FileText className="w-10 h-10 text-muted-foreground" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">No Resume Found</h2>
-              <p className="text-muted-foreground mb-6">
-                Create a resume first to analyze it.
+              <h2 className="text-2xl font-bold mb-3">No Resumes Found</h2>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Create a resume first to get AI-powered analysis and feedback.
               </p>
-              <Button onClick={() => navigate('/resume-builder')}>
-                Go to Resume Builder
-                <ArrowRight className="w-4 h-4 ml-2" />
+              <Button size="lg" onClick={() => navigate('/resume-builder')} className="gap-2">
+                Create Resume
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {currentResume && !latestAnalysis && !analyzing && (
+        {/* Ready State */}
+        {resumes.length > 0 && !latestAnalysis && !analyzing && (
           <Card className="glass-card">
             <CardContent className="p-12 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-6">
-                <Target className="w-10 h-10 text-emerald-500" />
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-6 animate-pulse-slow">
+                <Target className="w-12 h-12 text-emerald-500" />
               </div>
               <h2 className="text-2xl font-bold mb-3">Ready to Analyze</h2>
+              <p className="text-muted-foreground mb-2">
+                Selected: <span className="font-medium text-foreground">{selectedResume?.name || 'Untitled Resume'}</span>
+              </p>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                Click "Analyze Resume" to get AI-powered feedback on your resume's
-                strengths, weaknesses, and ATS compatibility.
+                Click "Analyze Now" to get comprehensive AI feedback on your resume's strengths, weaknesses, and ATS compatibility.
               </p>
               <Button onClick={runAnalysis} size="lg" className="gap-2 shadow-lg">
-                <Sparkles className="w-5 h-5" />
+                <Zap className="w-5 h-5" />
                 Start Analysis
               </Button>
             </CardContent>
           </Card>
         )}
 
+        {/* Analyzing State */}
         {analyzing && (
           <Card className="glass-card">
             <CardContent className="p-12 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-6">
+                <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
               </div>
               <h2 className="text-2xl font-bold mb-3">Analyzing Your Resume</h2>
-              <p className="text-muted-foreground">
-                AI is reviewing your content, format, and ATS compatibility...
+              <p className="text-muted-foreground mb-4">
+                AI is reviewing content, format, keywords, and ATS compatibility...
               </p>
+              <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+                <span className="flex items-center gap-2"><Eye className="w-4 h-4" /> Checking content</span>
+                <span className="flex items-center gap-2"><Shield className="w-4 h-4" /> ATS scan</span>
+                <span className="flex items-center gap-2"><Target className="w-4 h-4" /> Keywords</span>
+              </div>
             </CardContent>
           </Card>
         )}
 
+        {/* Results */}
         {latestAnalysis && !analyzing && (
           <div className="space-y-6 animate-fade-in">
             {/* Score Overview */}
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Overall Score */}
-              <Card className="glass-card md:row-span-2">
+            <div className="grid md:grid-cols-12 gap-6">
+              {/* Main Score Card */}
+              <Card className="glass-card md:col-span-5">
                 <CardContent className="p-8 text-center h-full flex flex-col justify-center">
-                  <div className="relative w-36 h-36 mx-auto mb-6">
+                  <div className="relative w-40 h-40 mx-auto mb-6">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
                       <circle
                         cx="50" cy="50" r="42" fill="none"
                         stroke="url(#scoreGradient)" strokeWidth="8" strokeLinecap="round"
                         strokeDasharray={`${latestAnalysis.score * 2.64} 264`}
+                        className="transition-all duration-1000"
                       />
                       <defs>
                         <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -200,59 +293,103 @@ export default function ResumeAnalysis() {
                       </defs>
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className={`text-4xl font-bold bg-gradient-to-r ${getScoreGradient(latestAnalysis.score)} bg-clip-text text-transparent`}>
+                      <span className={`text-5xl font-bold bg-gradient-to-r ${getScoreGradient(latestAnalysis.score)} bg-clip-text text-transparent`}>
                         {latestAnalysis.score}
                       </span>
                       <span className="text-sm text-muted-foreground">out of 100</span>
                     </div>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Overall Score</h3>
+                  <Badge className={`mx-auto mb-3 ${getScoreColor(latestAnalysis.score)}`}>
+                    {getScoreLabel(latestAnalysis.score)}
+                  </Badge>
+                  <h3 className="text-lg font-semibold mb-2">Overall Resume Score</h3>
                   <p className="text-sm text-muted-foreground">
                     {latestAnalysis.score >= 80
-                      ? 'Excellent! Your resume is competitive.'
+                      ? 'Excellent! Your resume is highly competitive.'
                       : latestAnalysis.score >= 60
-                      ? 'Good foundation, but room for improvement.'
+                      ? 'Good foundation with room for improvement.'
                       : latestAnalysis.score >= 40
-                      ? 'Needs significant improvements.'
-                      : 'Major revisions required.'}
+                      ? 'Needs significant enhancements.'
+                      : 'Major revisions required for competitiveness.'}
                   </p>
                 </CardContent>
               </Card>
 
-              {/* ATS Score */}
-              <Card className="glass-card">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">ATS Compatibility</h3>
-                    <span className={`text-2xl font-bold ${getScoreColor(latestAnalysis.atsScore)}`}>
-                      {latestAnalysis.atsScore}%
-                    </span>
-                  </div>
-                  <Progress value={latestAnalysis.atsScore} className="h-2 mb-2" />
-                  <p className="text-xs text-muted-foreground">
-                    Likelihood of passing automated screening
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Stats Grid */}
+              <div className="md:col-span-7 grid sm:grid-cols-2 gap-4">
+                {/* ATS Score */}
+                <Card className="glass-card">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-5 h-5 text-primary" />
+                        <h3 className="font-semibold">ATS Compatibility</h3>
+                      </div>
+                      <span className={`text-2xl font-bold ${getScoreColor(latestAnalysis.atsScore)}`}>
+                        {latestAnalysis.atsScore}%
+                      </span>
+                    </div>
+                    <Progress value={latestAnalysis.atsScore} className="h-2 mb-2" />
+                    <p className="text-xs text-muted-foreground">
+                      Probability of passing automated screening systems
+                    </p>
+                  </CardContent>
+                </Card>
 
-              {/* Quick Stats */}
-              <Card className="glass-card">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">Summary</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-center">
-                    <div className="p-2 rounded-lg bg-score-good/10">
-                      <div className="text-lg font-bold text-score-good">{latestAnalysis.strengthAreas.length}</div>
-                      <div className="text-xs text-muted-foreground">Strengths</div>
+                {/* Strengths */}
+                <Card className="glass-card">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        <h3 className="font-semibold">Strengths</h3>
+                      </div>
+                      <span className="text-2xl font-bold text-emerald-500">
+                        {latestAnalysis.strengthAreas.length}
+                      </span>
                     </div>
-                    <div className="p-2 rounded-lg bg-destructive/10">
-                      <div className="text-lg font-bold text-destructive">{latestAnalysis.weaknesses.length}</div>
-                      <div className="text-xs text-muted-foreground">Issues</div>
+                    <p className="text-xs text-muted-foreground">
+                      Areas where your resume excels
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Issues */}
+                <Card className="glass-card">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <XCircle className="w-5 h-5 text-destructive" />
+                        <h3 className="font-semibold">Issues Found</h3>
+                      </div>
+                      <span className="text-2xl font-bold text-destructive">
+                        {latestAnalysis.weaknesses.length}
+                      </span>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <p className="text-xs text-muted-foreground">
+                      Areas that need improvement
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Suggestions */}
+                <Card className="glass-card">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-amber-500" />
+                        <h3 className="font-semibold">Suggestions</h3>
+                      </div>
+                      <span className="text-2xl font-bold text-amber-500">
+                        {latestAnalysis.suggestions.length}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Actionable improvement tips
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
             {/* Detailed Analysis */}
@@ -260,17 +397,19 @@ export default function ResumeAnalysis() {
               {/* Strengths */}
               {latestAnalysis.strengthAreas.length > 0 && (
                 <Card className="glass-card">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-lg bg-score-good/10 flex items-center justify-center">
-                        <CheckCircle2 className="w-4 h-4 text-score-good" />
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                       </div>
-                      Strengths
-                    </h3>
+                      What's Working Well
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
                     <ul className="space-y-3">
                       {latestAnalysis.strengthAreas.map((strength, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <TrendingUp className="w-4 h-4 text-score-good mt-0.5 flex-shrink-0" />
+                        <li key={index} className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                          <TrendingUp className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{strength}</span>
                         </li>
                       ))}
@@ -282,16 +421,18 @@ export default function ResumeAnalysis() {
               {/* Weaknesses */}
               {latestAnalysis.weaknesses.length > 0 && (
                 <Card className="glass-card">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold flex items-center gap-2 mb-4">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
                       <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
                         <XCircle className="w-4 h-4 text-destructive" />
                       </div>
                       Critical Issues
-                    </h3>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
                     <ul className="space-y-3">
                       {latestAnalysis.weaknesses.map((weakness, index) => (
-                        <li key={index} className="flex items-start gap-3">
+                        <li key={index} className="flex items-start gap-3 p-3 rounded-lg bg-destructive/5 border border-destructive/10">
                           <AlertCircle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{weakness}</span>
                         </li>
@@ -304,17 +445,19 @@ export default function ResumeAnalysis() {
 
             {/* Suggestions */}
             <Card className="glass-card">
-              <CardContent className="p-6">
-                <h3 className="font-semibold flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-score-average/10 flex items-center justify-center">
-                    <AlertTriangle className="w-4 h-4 text-score-average" />
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
                   </div>
                   Improvement Suggestions
-                </h3>
-                <div className="grid sm:grid-cols-2 gap-4">
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {latestAnalysis.suggestions.map((suggestion, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
-                      <span className="w-6 h-6 rounded-full bg-score-average/20 text-score-average text-xs flex items-center justify-center flex-shrink-0 font-medium">
+                    <div key={index} className="flex items-start gap-3 p-4 rounded-xl bg-secondary/50 border border-border">
+                      <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground text-xs flex items-center justify-center flex-shrink-0 font-bold">
                         {index + 1}
                       </span>
                       <span className="text-sm">{suggestion}</span>
@@ -326,15 +469,16 @@ export default function ResumeAnalysis() {
 
             {/* Skill Inflation Warning */}
             {latestAnalysis.skillInflation.length > 0 && (
-              <Card className="glass-card border-l-4 border-l-score-average">
+              <Card className="glass-card border-l-4 border-l-amber-500">
                 <CardContent className="p-6">
                   <h3 className="font-semibold flex items-center gap-2 mb-3">
-                    <AlertTriangle className="w-5 h-5 text-score-average" />
+                    <AlertTriangle className="w-5 h-5 text-amber-500" />
                     Skill Inflation Warning
                   </h3>
                   <ul className="space-y-2">
                     {latestAnalysis.skillInflation.map((warning, index) => (
-                      <li key={index} className="text-sm text-muted-foreground">
+                      <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <ChevronRight className="w-4 h-4 mt-0.5 text-amber-500" />
                         {warning}
                       </li>
                     ))}
@@ -346,15 +490,38 @@ export default function ResumeAnalysis() {
             {/* Next Steps */}
             <Card className="glass-card">
               <CardContent className="p-6">
-                <h3 className="font-semibold mb-4">What's Next?</h3>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <Button variant="outline" className="justify-start gap-3" onClick={() => navigate('/resume-builder')}>
-                    <FileText className="w-4 h-4" />
-                    Edit Resume
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <ArrowRight className="w-5 h-5 text-primary" />
+                  Next Steps
+                </h3>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Button variant="outline" className="justify-start gap-3 h-auto py-4" onClick={() => navigate('/resume-builder')}>
+                    <FileText className="w-5 h-5 text-blue-500" />
+                    <div className="text-left">
+                      <p className="font-medium">Edit Resume</p>
+                      <p className="text-xs text-muted-foreground">Apply suggestions</p>
+                    </div>
                   </Button>
-                  <Button variant="outline" className="justify-start gap-3" onClick={() => navigate('/skill-gap')}>
-                    <Target className="w-4 h-4" />
-                    Check Skill Gaps
+                  <Button variant="outline" className="justify-start gap-3 h-auto py-4" onClick={() => navigate('/skill-gap')}>
+                    <Target className="w-5 h-5 text-orange-500" />
+                    <div className="text-left">
+                      <p className="font-medium">Skill Gap Check</p>
+                      <p className="text-xs text-muted-foreground">Find missing skills</p>
+                    </div>
+                  </Button>
+                  <Button variant="outline" className="justify-start gap-3 h-auto py-4" onClick={() => navigate('/interview')}>
+                    <Clock className="w-5 h-5 text-purple-500" />
+                    <div className="text-left">
+                      <p className="font-medium">Mock Interview</p>
+                      <p className="text-xs text-muted-foreground">Practice with AI</p>
+                    </div>
+                  </Button>
+                  <Button variant="outline" className="justify-start gap-3 h-auto py-4" onClick={() => navigate('/career-verdict')}>
+                    <Award className="w-5 h-5 text-emerald-500" />
+                    <div className="text-left">
+                      <p className="font-medium">Career Verdict</p>
+                      <p className="text-xs text-muted-foreground">Overall assessment</p>
+                    </div>
                   </Button>
                 </div>
               </CardContent>
