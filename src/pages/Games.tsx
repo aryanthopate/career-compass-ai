@@ -156,8 +156,22 @@ export default function Games() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <Header />
+      
+      {/* Floating CodeVerse Link */}
+      <a
+        href="https://thecodeverse.vercel.app"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 group"
+      >
+        <div className="flex items-center gap-3 px-5 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 transition-all duration-300 hover:scale-105">
+          <Sparkles className="w-5 h-5 animate-pulse" />
+          <span className="font-semibold text-sm">Start Learning from CodeVerse</span>
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </div>
+      </a>
       
       <main className="container py-6 md:py-8 px-4 max-w-7xl">
         {/* Hero Section */}
