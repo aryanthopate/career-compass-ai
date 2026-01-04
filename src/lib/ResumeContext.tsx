@@ -31,6 +31,20 @@ export interface Project {
   link?: string;
 }
 
+export interface Link {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  date: string;
+  url?: string;
+}
+
 export interface Resume {
   id: string;
   version: number;
@@ -38,12 +52,15 @@ export interface Resume {
   email: string;
   phone: string;
   location: string;
+  portfolioLink: string;
+  links: Link[];
   summary: string;
   education: Education[];
   experience: Experience[];
   projects: Project[];
   skills: string[];
   achievements: string[];
+  certifications: Certification[];
   createdAt: string;
   updatedAt: string;
 }
@@ -155,19 +172,22 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
         .order('version', { ascending: false });
 
       if (resumesData) {
-        const mapped = resumesData.map((r) => ({
+        const mapped: Resume[] = resumesData.map((r) => ({
           id: r.id,
           version: r.version,
           name: r.name || '',
           email: r.email || '',
           phone: r.phone || '',
           location: r.location || '',
+          portfolioLink: (r as any).portfolio_link || '',
+          links: ((r as any).links as unknown as Link[]) || [],
           summary: r.summary || '',
           education: (r.education as unknown as Education[]) || [],
           experience: (r.experience as unknown as Experience[]) || [],
           projects: (r.projects as unknown as Project[]) || [],
           skills: r.skills || [],
           achievements: r.achievements || [],
+          certifications: ((r as any).certifications as unknown as Certification[]) || [],
           createdAt: r.created_at,
           updatedAt: r.updated_at,
         }));
@@ -289,12 +309,15 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
             email: resumeData.email,
             phone: resumeData.phone,
             location: resumeData.location,
+            portfolio_link: resumeData.portfolioLink,
+            links: resumeData.links as unknown as Json,
             summary: resumeData.summary,
             education: resumeData.education as unknown as Json,
             experience: resumeData.experience as unknown as Json,
             projects: resumeData.projects as unknown as Json,
             skills: resumeData.skills,
             achievements: resumeData.achievements,
+            certifications: resumeData.certifications as unknown as Json,
           })
           .eq('id', resumeData.id)
           .select()
@@ -309,12 +332,15 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
           email: data.email || '',
           phone: data.phone || '',
           location: data.location || '',
+          portfolioLink: (data as any).portfolio_link || '',
+          links: ((data as any).links as unknown as Link[]) || [],
           summary: data.summary || '',
           education: (data.education as unknown as Education[]) || [],
           experience: (data.experience as unknown as Experience[]) || [],
           projects: (data.projects as unknown as Project[]) || [],
           skills: data.skills || [],
           achievements: data.achievements || [],
+          certifications: ((data as any).certifications as unknown as Certification[]) || [],
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         };
@@ -340,12 +366,15 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
             email: resumeData.email || '',
             phone: resumeData.phone || '',
             location: resumeData.location || '',
+            portfolio_link: resumeData.portfolioLink || '',
+            links: (resumeData.links || []) as unknown as Json,
             summary: resumeData.summary || '',
             education: (resumeData.education || []) as unknown as Json,
             experience: (resumeData.experience || []) as unknown as Json,
             projects: (resumeData.projects || []) as unknown as Json,
             skills: resumeData.skills || [],
             achievements: resumeData.achievements || [],
+            certifications: (resumeData.certifications || []) as unknown as Json,
           })
           .select()
           .single();
@@ -359,12 +388,15 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
           email: data.email || '',
           phone: data.phone || '',
           location: data.location || '',
+          portfolioLink: (data as any).portfolio_link || '',
+          links: ((data as any).links as unknown as Link[]) || [],
           summary: data.summary || '',
           education: (data.education as unknown as Education[]) || [],
           experience: (data.experience as unknown as Experience[]) || [],
           projects: (data.projects as unknown as Project[]) || [],
           skills: data.skills || [],
           achievements: data.achievements || [],
+          certifications: ((data as any).certifications as unknown as Certification[]) || [],
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         };
