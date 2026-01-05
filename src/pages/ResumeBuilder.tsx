@@ -773,8 +773,33 @@ export default function ResumeBuilder() {
                         <p className="text-[10px] font-semibold text-muted-foreground mt-1">{formData.skills.slice(0, 3).join(' | ')}</p>
                       )}
                       <p className="text-[10px] text-muted-foreground mt-1">
-                        {[formData.location, formData.email, formData.phone, formData.portfolioLink].filter(Boolean).join(' | ')}
+                        {[formData.location, formData.email, formData.phone].filter(Boolean).join(' | ')}
+                        {formData.portfolioLink && (
+                          <>
+                            {' | '}
+                            <a href={formData.portfolioLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              {formData.portfolioLink.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                            </a>
+                          </>
+                        )}
                       </p>
+                      {/* Additional Links */}
+                      {formData.links && formData.links.length > 0 && (
+                        <div className="flex justify-center gap-2 mt-2 flex-wrap">
+                          {formData.links.map((link) => (
+                            <a 
+                              key={link.id} 
+                              href={link.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-[9px] text-primary hover:underline flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              {link.label || link.url}
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Summary */}
@@ -829,12 +854,45 @@ export default function ResumeBuilder() {
                       </div>
                     )}
 
+                    {/* Projects */}
+                    {formData.projects && formData.projects.length > 0 && (
+                      <div>
+                        <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">PROJECTS</h2>
+                        {formData.projects.map((proj) => (
+                          <div key={proj.id} className="mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold">{proj.name}</span>
+                              {proj.link && (
+                                <a href={proj.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-[9px]">
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-[10px]">{proj.description}</p>
+                            {proj.technologies && proj.technologies.length > 0 && (
+                              <p className="text-[9px] text-muted-foreground">Tech: {proj.technologies.join(', ')}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Certifications */}
                     {formData.certifications && formData.certifications.length > 0 && (
                       <div>
                         <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">CERTIFICATIONS</h2>
                         <div className="space-y-0.5">
-                          {formData.certifications.map((cert) => <p key={cert.id}>• {cert.name} - {cert.issuer}</p>)}
+                          {formData.certifications.map((cert) => <p key={cert.id}>• {cert.name} - {cert.issuer} ({cert.date})</p>)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Achievements */}
+                    {formData.achievements && formData.achievements.length > 0 && (
+                      <div>
+                        <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">ACHIEVEMENTS</h2>
+                        <div className="space-y-0.5">
+                          {formData.achievements.map((ach, i) => <p key={i}>• {ach}</p>)}
                         </div>
                       </div>
                     )}
