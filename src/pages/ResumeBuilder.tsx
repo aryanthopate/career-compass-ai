@@ -171,9 +171,20 @@ export default function ResumeBuilder() {
     // Contact info (single line, centered)
     doc.setFont(fontNormal, 'normal');
     doc.setFontSize(10);
-    const contactParts = [formData.location, formData.email, formData.phone, formData.portfolioLink].filter(Boolean);
+    const contactParts = [formData.location, formData.email, formData.phone].filter(Boolean);
+    if (formData.portfolioLink) {
+      contactParts.push(formData.portfolioLink.replace(/^https?:\/\//, '').replace(/\/$/, ''));
+    }
     doc.text(contactParts.join(' | '), pageWidth / 2, y, { align: 'center' });
-    y += 25;
+    y += 14;
+
+    // Additional Links
+    if (formData.links && formData.links.length > 0) {
+      const linksText = formData.links.map(link => `${link.label || link.url}`).join(' | ');
+      doc.setFontSize(9);
+      doc.text(linksText, pageWidth / 2, y, { align: 'center' });
+      y += 14;
+    }
 
     // Divider
     doc.setDrawColor(0, 0, 0);
