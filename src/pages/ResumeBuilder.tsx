@@ -168,23 +168,56 @@ export default function ResumeBuilder() {
       y += 18;
     }
 
-    // Contact info (single line, centered)
+    // Contact info (single line, centered) with clickable links
     doc.setFont(fontNormal, 'normal');
     doc.setFontSize(10);
     const contactParts = [formData.location, formData.email, formData.phone].filter(Boolean);
-    if (formData.portfolioLink) {
-      contactParts.push(formData.portfolioLink.replace(/^https?:\/\//, '').replace(/\/$/, ''));
-    }
-    doc.text(contactParts.join(' | '), pageWidth / 2, y, { align: 'center' });
+    const contactText = contactParts.join(' | ');
+    doc.text(contactText, pageWidth / 2, y, { align: 'center' });
     y += 14;
 
-    // Additional Links
+    // Portfolio Link (clickable)
+    if (formData.portfolioLink) {
+      doc.setTextColor(0, 102, 204); // Blue color for links
+      const portfolioDisplay = formData.portfolioLink.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const textWidth = doc.getTextWidth(portfolioDisplay);
+      const linkX = (pageWidth - textWidth) / 2;
+      doc.textWithLink(portfolioDisplay, linkX, y, { url: formData.portfolioLink });
+      y += 14;
+      doc.setTextColor(0, 0, 0); // Reset to black
+    }
+
+    // Additional Links (clickable, ATS-friendly)
     if (formData.links && formData.links.length > 0) {
-      const linksText = formData.links.map(link => `${link.label || link.url}`).join(' | ');
       doc.setFontSize(9);
-      doc.text(linksText, pageWidth / 2, y, { align: 'center' });
+      doc.setTextColor(0, 102, 204);
+      let linkY = y;
+      const linkTexts: { text: string; url: string; width: number }[] = formData.links.map(link => ({
+        text: link.label || link.url.replace(/^https?:\/\//, '').replace(/\/$/, ''),
+        url: link.url,
+        width: doc.getTextWidth(link.label || link.url.replace(/^https?:\/\//, '').replace(/\/$/, ''))
+      }));
+      
+      // Calculate total width including separators
+      const separator = ' | ';
+      const separatorWidth = doc.getTextWidth(separator);
+      const totalWidth = linkTexts.reduce((acc, l, i) => acc + l.width + (i > 0 ? separatorWidth : 0), 0);
+      let currentX = (pageWidth - totalWidth) / 2;
+      
+      doc.setTextColor(0, 0, 0);
+      linkTexts.forEach((link, i) => {
+        if (i > 0) {
+          doc.text(separator, currentX, linkY);
+          currentX += separatorWidth;
+        }
+        doc.setTextColor(0, 102, 204);
+        doc.textWithLink(link.text, currentX, linkY, { url: link.url });
+        doc.setTextColor(0, 0, 0);
+        currentX += link.width;
+      });
       y += 14;
     }
+    doc.setTextColor(0, 0, 0);
 
     // Divider
     doc.setDrawColor(0, 0, 0);
@@ -794,21 +827,25 @@ export default function ResumeBuilder() {
                           </>
                         )}
                       </p>
-                      {/* Additional Links */}
+                      {/* Additional Links Section */}
                       {formData.links && formData.links.length > 0 && (
-                        <div className="flex justify-center gap-2 mt-2 flex-wrap">
-                          {formData.links.map((link) => (
-                            <a 
-                              key={link.id} 
-                              href={link.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-[9px] text-primary hover:underline flex items-center gap-1"
-                            >
-                              <ExternalLink className="w-2.5 h-2.5" />
-                              {link.label || link.url}
-                            </a>
-                          ))}
+                        <div className="mt-3 pt-2 border-t border-border/50">
+                          <p className="text-[9px] font-semibold text-muted-foreground mb-1.5">LINKS</p>
+                          <div className="flex justify-center gap-3 flex-wrap">
+                            {formData.links.map((link) => (
+                              <a 
+                                key={link.id} 
+                                href={link.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-[9px] text-primary hover:underline flex items-center gap-1"
+                              >
+                                <ExternalLink className="w-2.5 h-2.5" />
+                                <span className="font-medium">{link.label}</span>
+                                <span className="text-muted-foreground">({link.url.replace(/^https?:\/\//, '').replace(/\/$/, '').slice(0, 25)}{link.url.length > 35 ? '...' : ''})</span>
+                              </a>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
