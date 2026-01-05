@@ -143,7 +143,22 @@ export default function ResumeBuilder() {
     const contentWidth = pageWidth - margin * 2;
     let y = margin;
     const fontNormal = 'helvetica';
-    
+
+    const normalizeUrl = (url?: string) => {
+      const raw = (url || '').trim();
+      if (!raw) return '';
+      return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    };
+
+    const displayUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+
+    const ensureSpace = (needed: number) => {
+      if (y > pageHeight - margin - needed) {
+        doc.addPage();
+        y = margin;
+      }
+    };
+
     const addWrappedText = (text: string, x: number, maxWidth: number, lineHeight: number) => {
       const lines = doc.splitTextToSize(text, maxWidth);
       lines.forEach((line: string) => {
@@ -177,45 +192,55 @@ export default function ResumeBuilder() {
     y += 14;
 
     // Portfolio Link (clickable)
-    if (formData.portfolioLink) {
-      doc.setTextColor(0, 102, 204); // Blue color for links
-      const portfolioDisplay = formData.portfolioLink.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const portfolioUrl = normalizeUrl(formData.portfolioLink);
+    if (portfolioUrl) {
+      doc.setTextColor(0, 102, 204); // Link color
+      const portfolioDisplay = displayUrl(portfolioUrl);
       const textWidth = doc.getTextWidth(portfolioDisplay);
       const linkX = (pageWidth - textWidth) / 2;
-      doc.textWithLink(portfolioDisplay, linkX, y, { url: formData.portfolioLink });
+      doc.textWithLink(portfolioDisplay, linkX, y, { url: portfolioUrl });
       y += 14;
-      doc.setTextColor(0, 0, 0); // Reset to black
+      doc.setTextColor(0, 0, 0);
     }
 
-    // Additional Links (clickable, ATS-friendly)
+    // Additional Links (clickable + label + url)
     if (formData.links && formData.links.length > 0) {
       doc.setFontSize(9);
-      doc.setTextColor(0, 102, 204);
-      let linkY = y;
-      const linkTexts: { text: string; url: string; width: number }[] = formData.links.map(link => ({
-        text: link.label || link.url.replace(/^https?:\/\//, '').replace(/\/$/, ''),
-        url: link.url,
-        width: doc.getTextWidth(link.label || link.url.replace(/^https?:\/\//, '').replace(/\/$/, ''))
-      }));
-      
-      // Calculate total width including separators
-      const separator = ' | ';
-      const separatorWidth = doc.getTextWidth(separator);
-      const totalWidth = linkTexts.reduce((acc, l, i) => acc + l.width + (i > 0 ? separatorWidth : 0), 0);
-      let currentX = (pageWidth - totalWidth) / 2;
-      
-      doc.setTextColor(0, 0, 0);
-      linkTexts.forEach((link, i) => {
-        if (i > 0) {
-          doc.text(separator, currentX, linkY);
-          currentX += separatorWidth;
-        }
-        doc.setTextColor(0, 102, 204);
-        doc.textWithLink(link.text, currentX, linkY, { url: link.url });
+      const validLinks = formData.links
+        .map((l) => ({
+          label: (l.label || '').trim(),
+          url: normalizeUrl(l.url),
+        }))
+        .filter((l) => Boolean(l.url));
+
+      if (validLinks.length > 0) {
+        // Render as: Label: domain.com | Label2: domain.com
         doc.setTextColor(0, 0, 0);
-        currentX += link.width;
-      });
-      y += 14;
+        const separator = ' | ';
+        const parts = validLinks.map((l) => {
+          const shown = displayUrl(l.url);
+          const text = l.label ? `${l.label}: ${shown}` : shown;
+          return { text, url: l.url, width: doc.getTextWidth(text) };
+        });
+
+        const separatorWidth = doc.getTextWidth(separator);
+        const totalWidth = parts.reduce((acc, p, i) => acc + p.width + (i > 0 ? separatorWidth : 0), 0);
+        let currentX = (pageWidth - totalWidth) / 2;
+
+        parts.forEach((p, i) => {
+          if (i > 0) {
+            doc.setTextColor(0, 0, 0);
+            doc.text(separator, currentX, y);
+            currentX += separatorWidth;
+          }
+          doc.setTextColor(0, 102, 204);
+          doc.textWithLink(p.text, currentX, y, { url: p.url });
+          currentX += p.width;
+        });
+
+        doc.setTextColor(0, 0, 0);
+        y += 14;
+      }
     }
     doc.setTextColor(0, 0, 0);
 
@@ -307,6 +332,52 @@ export default function ResumeBuilder() {
       y += 8;
     }
 
+    // Projects
+    if (formData.projects && formData.projects.length > 0) {
+      ensureSpace(40);
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(12);
+      doc.text('PROJECTS', margin, y);
+      y += 5;
+      doc.line(margin, y, margin + 70, y);
+      y += 15;
+
+      formData.projects.forEach((proj) => {
+        ensureSpace(40);
+        const projectName = proj.name || 'Project';
+
+        doc.setFont(fontNormal, 'bold');
+        doc.setFontSize(11);
+        doc.text(projectName, margin, y);
+
+        const projectUrl = normalizeUrl(proj.link || '');
+        if (projectUrl) {
+          const linkText = displayUrl(projectUrl);
+          doc.setFont(fontNormal, 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(0, 102, 204);
+          const nameWidth = doc.getTextWidth(projectName);
+          const linkWidth = doc.getTextWidth(linkText);
+          const x = Math.min(pageWidth - margin - linkWidth, margin + nameWidth + 10);
+          doc.textWithLink(linkText, x, y, { url: projectUrl });
+          doc.setTextColor(0, 0, 0);
+        }
+
+        y += 14;
+        doc.setFont(fontNormal, 'normal');
+        doc.setFontSize(10);
+
+        if (proj.description) {
+          addWrappedText(`• ${proj.description}`, margin + 10, contentWidth - 10, 13);
+        }
+        if (proj.technologies && proj.technologies.length > 0) {
+          addWrappedText(`Tech: ${proj.technologies.join(', ')}`, margin + 10, contentWidth - 10, 13);
+        }
+        y += 6;
+      });
+
+      y += 6;
+    }
     // Certifications
     if (formData.certifications && formData.certifications.length > 0) {
       doc.setFont(fontNormal, 'bold');
@@ -908,15 +979,21 @@ export default function ResumeBuilder() {
                         <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">PROJECTS</h2>
                         {formData.projects.map((proj) => (
                           <div key={proj.id} className="mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold">{proj.name}</span>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <span className="font-bold">{proj.name || 'Project'}</span>
                               {proj.link && (
-                                <a href={proj.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-[9px]">
+                                <a
+                                  href={/^https?:\/\//.test(proj.link) ? proj.link : `https://${proj.link}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline text-[9px] inline-flex items-center gap-1"
+                                >
                                   <ExternalLink className="w-2.5 h-2.5" />
+                                  {proj.link.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                                 </a>
                               )}
                             </div>
-                            <p className="text-[10px]">{proj.description}</p>
+                            {proj.description && <p className="text-[10px]">{proj.description}</p>}
                             {proj.technologies && proj.technologies.length > 0 && (
                               <p className="text-[9px] text-muted-foreground">Tech: {proj.technologies.join(', ')}</p>
                             )}
