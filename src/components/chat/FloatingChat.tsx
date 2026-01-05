@@ -34,7 +34,7 @@ export function FloatingChat() {
 
   return (
     <Card className={`fixed bottom-6 right-6 z-50 shadow-2xl border-border overflow-hidden transition-all duration-300 ${
-      isMinimized ? 'w-72 h-14' : 'w-96 h-[500px]'
+      isMinimized ? 'w-72 h-14' : 'w-[380px] max-w-[calc(100vw-3rem)] h-[500px]'
     }`}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
