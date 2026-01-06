@@ -19,6 +19,7 @@ import CareerVerdict from "./pages/CareerVerdict";
 import Chat from "./pages/Chat";
 import Games from "./pages/Games";
 import GamePlay from "./pages/GamePlay";
+import SharedResume from "./pages/SharedResume";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -93,6 +94,7 @@ function AppContent() {
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
         <Route path="/games" element={<ProtectedRoute><Games /></ProtectedRoute>} />
         <Route path="/games/:language" element={<ProtectedRoute><GamePlay /></ProtectedRoute>} />
+        <Route path="/resume/:token" element={<SharedResume />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminOverview />} />
           <Route path="users" element={<AdminUsers />} />

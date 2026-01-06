@@ -48,6 +48,7 @@ import {
   Globe,
   ExternalLink,
   Eye,
+  Share2,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -62,6 +63,7 @@ export default function ResumeBuilder() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [generatingShareLink, setGeneratingShareLink] = useState(false);
 
   const [formData, setFormData] = useState<Partial<Resume>>(
     currentResume || {
@@ -536,6 +538,43 @@ export default function ResumeBuilder() {
   };
   const removeCertification = (id: string) => updateField('certifications', formData.certifications?.filter((cert) => cert.id !== id));
 
+  const handleShareResume = async () => {
+    if (!currentResume?.id) {
+      toast({ title: 'Save first', description: 'Please save your resume before sharing.', variant: 'destructive' });
+      return;
+    }
+    setGeneratingShareLink(true);
+    try {
+      // Check if this resume already has a share token
+      const { data: existing, error: fetchErr } = await supabase
+        .from('resumes')
+        .select('share_token')
+        .eq('id', currentResume.id)
+        .single();
+
+      let shareToken = existing?.share_token;
+
+      if (!shareToken) {
+        const newToken = crypto.randomUUID();
+        const { error: updateErr } = await supabase
+          .from('resumes')
+          .update({ share_token: newToken })
+          .eq('id', currentResume.id);
+
+        if (updateErr) throw updateErr;
+        shareToken = newToken;
+      }
+
+      const shareUrl = `${window.location.origin}/resume/${shareToken}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast({ title: 'Link copied!', description: 'Share this link with anyone to view your resume.' });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Failed to generate link', description: 'Please try again.', variant: 'destructive' });
+    }
+    setGeneratingShareLink(false);
+  };
+
   const loadResume = (resume: Resume) => {
     setFormData(resume);
     setCurrentResume(resume);
@@ -589,6 +628,10 @@ export default function ResumeBuilder() {
             <Button variant="outline" size="sm" onClick={handleExportJSON} className="gap-2">
               <FileDown className="w-4 h-4" />
               JSON
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleShareResume} disabled={generatingShareLink} className="gap-2">
+              {generatingShareLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+              Share
             </Button>
             <Button onClick={handleSave} disabled={saving} className="gap-2 shadow-md">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

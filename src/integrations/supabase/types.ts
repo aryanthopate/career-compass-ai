@@ -407,6 +407,7 @@ export type Database = {
           phone: string | null
           portfolio_link: string | null
           projects: Json | null
+          share_token: string | null
           skills: string[] | null
           summary: string | null
           updated_at: string
@@ -427,6 +428,7 @@ export type Database = {
           phone?: string | null
           portfolio_link?: string | null
           projects?: Json | null
+          share_token?: string | null
           skills?: string[] | null
           summary?: string | null
           updated_at?: string
@@ -447,6 +449,7 @@ export type Database = {
           phone?: string | null
           portfolio_link?: string | null
           projects?: Json | null
+          share_token?: string | null
           skills?: string[] | null
           summary?: string | null
           updated_at?: string
