@@ -85,11 +85,52 @@ export default function ResumeBuilder() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const normalizeUrl = (url?: string) => {
+    const raw = (url || '').trim();
+    if (!raw) return '';
+    return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  };
+
+  const displayUrl = (url: string) =>
+    url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+
+  const splitLinesPreserve = (value: string) => value.split(/\r?\n/);
+
+  const compactStringArray = (arr?: (string | null)[]) =>
+    (arr || []).map((s) => (s || '').trim()).filter((s) => s.length > 0);
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const saved = await saveResume(formData);
+      const cleaned: Partial<Resume> = {
+        ...formData,
+        skills: compactStringArray(formData.skills),
+        achievements: compactStringArray(formData.achievements),
+        links: (formData.links || [])
+          .map((l) => ({ ...l, label: (l.label || '').trim(), url: (l.url || '').trim() }))
+          .filter((l) => l.label || l.url),
+        experience: (formData.experience || []).map((exp) => ({
+          ...exp,
+          highlights: compactStringArray(exp.highlights),
+        })),
+        projects: (formData.projects || []).map((p) => ({
+          ...p,
+          technologies: compactStringArray(p.technologies),
+        })),
+        certifications: (formData.certifications || [])
+          .map((c) => ({
+            ...c,
+            name: (c.name || '').trim(),
+            issuer: (c.issuer || '').trim(),
+            date: (c.date || '').trim(),
+            url: (c.url || '').trim(),
+          }))
+          .filter((c) => c.name || c.issuer || c.date || c.url),
+      };
+
+      const saved = await saveResume(cleaned);
       if (saved) {
+        setFormData(cleaned);
         toast({ title: 'Resume saved!', description: `Version ${saved.version} saved successfully.` });
       }
     } catch (error) {
@@ -144,13 +185,8 @@ export default function ResumeBuilder() {
     let y = margin;
     const fontNormal = 'helvetica';
 
-    const normalizeUrl = (url?: string) => {
-      const raw = (url || '').trim();
-      if (!raw) return '';
-      return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-    };
-
-    const displayUrl = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+    const pdfSkills = compactStringArray(formData.skills);
+    const pdfAchievements = compactStringArray(formData.achievements);
 
     const ensureSpace = (needed: number) => {
       if (y > pageHeight - margin - needed) {
@@ -160,11 +196,26 @@ export default function ResumeBuilder() {
     };
 
     const addWrappedText = (text: string, x: number, maxWidth: number, lineHeight: number) => {
-      const lines = doc.splitTextToSize(text, maxWidth);
-      lines.forEach((line: string) => {
-        if (y > pageHeight - margin) { doc.addPage(); y = margin; }
-        doc.text(line, x, y);
-        y += lineHeight;
+      const paragraphs = String(text || '').split(/\r?\n/);
+      paragraphs.forEach((p) => {
+        if (p === '') {
+          if (y > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+          }
+          y += lineHeight;
+          return;
+        }
+
+        const lines = doc.splitTextToSize(p, maxWidth);
+        lines.forEach((line: string) => {
+          if (y > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.text(line, x, y);
+          y += lineHeight;
+        });
       });
     };
 
@@ -175,10 +226,10 @@ export default function ResumeBuilder() {
     y += 28;
 
     // Professional title/tagline if skills exist
-    if (formData.skills && formData.skills.length >= 3) {
+    if (pdfSkills.length >= 3) {
       doc.setFont(fontNormal, 'bold');
       doc.setFontSize(11);
-      const tagline = formData.skills.slice(0, 3).join(' | ');
+      const tagline = pdfSkills.slice(0, 3).join(' | ');
       doc.text(tagline, pageWidth / 2, y, { align: 'center' });
       y += 18;
     }
@@ -319,7 +370,7 @@ export default function ResumeBuilder() {
     }
 
     // Skills
-    if (formData.skills && formData.skills.length > 0) {
+    if (pdfSkills.length > 0) {
       doc.setFont(fontNormal, 'bold');
       doc.setFontSize(12);
       doc.text('SKILLS', margin, y);
@@ -328,7 +379,9 @@ export default function ResumeBuilder() {
       y += 15;
       doc.setFont(fontNormal, 'normal');
       doc.setFontSize(10);
-      formData.skills.forEach(skill => { addWrappedText(`• ${skill}`, margin, contentWidth, 13); });
+      pdfSkills.forEach((skill) => {
+        addWrappedText(`• ${skill}`, margin, contentWidth, 13);
+      });
       y += 8;
     }
 
@@ -370,8 +423,9 @@ export default function ResumeBuilder() {
         if (proj.description) {
           addWrappedText(`• ${proj.description}`, margin + 10, contentWidth - 10, 13);
         }
-        if (proj.technologies && proj.technologies.length > 0) {
-          addWrappedText(`Tech: ${proj.technologies.join(', ')}`, margin + 10, contentWidth - 10, 13);
+        const tech = compactStringArray(proj.technologies);
+        if (tech.length > 0) {
+          addWrappedText(`Tech: ${tech.join(', ')}`, margin + 10, contentWidth - 10, 13);
         }
         y += 6;
       });
@@ -380,6 +434,7 @@ export default function ResumeBuilder() {
     }
     // Certifications
     if (formData.certifications && formData.certifications.length > 0) {
+      ensureSpace(40);
       doc.setFont(fontNormal, 'bold');
       doc.setFontSize(12);
       doc.text('CERTIFICATIONS', margin, y);
@@ -388,8 +443,27 @@ export default function ResumeBuilder() {
       y += 15;
       doc.setFont(fontNormal, 'normal');
       doc.setFontSize(10);
-      formData.certifications.forEach(cert => {
-        addWrappedText(`• ${cert.name} - ${cert.issuer} (${cert.date})`, margin, contentWidth, 13);
+      formData.certifications
+        .filter((cert) => cert.name || cert.issuer || cert.date)
+        .forEach((cert) => {
+          addWrappedText(`• ${cert.name} - ${cert.issuer} (${cert.date})`, margin, contentWidth, 13);
+        });
+      y += 8;
+    }
+
+    // Achievements
+    if (pdfAchievements.length > 0) {
+      ensureSpace(40);
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(12);
+      doc.text('ACHIEVEMENTS', margin, y);
+      y += 5;
+      doc.line(margin, y, margin + 95, y);
+      y += 15;
+      doc.setFont(fontNormal, 'normal');
+      doc.setFontSize(10);
+      pdfAchievements.forEach((ach) => {
+        addWrappedText(`• ${ach}`, margin, contentWidth, 13);
       });
       y += 8;
     }
@@ -711,7 +785,7 @@ export default function ResumeBuilder() {
                         </div>
                         <div className="space-y-2">
                           <Label>Additional Highlights (one per line)</Label>
-                          <Textarea value={exp.highlights?.join('\n') || ''} onChange={(e) => updateExperience(exp.id, 'highlights', e.target.value.split('\n').filter(Boolean))} placeholder="Achieved a 35% increase in website traffic...&#10;Managed a marketing budget of $200,000..." rows={3} />
+                          <Textarea value={exp.highlights?.join('\n') || ''} onChange={(e) => updateExperience(exp.id, 'highlights', splitLinesPreserve(e.target.value))} placeholder="Achieved a 35% increase in website traffic...&#10;Managed a marketing budget of $200,000..." rows={3} />
                         </div>
                       </div>
                     ))}
@@ -759,10 +833,10 @@ export default function ResumeBuilder() {
                     </div>
                     <div className="space-y-2">
                       <Label>Skills (one per line or comma-separated)</Label>
-                      <Textarea value={formData.skills?.join('\n') || ''} onChange={(e) => updateField('skills', e.target.value.split(/[\n,]/).map(s => s.trim()).filter(Boolean))} placeholder="Digital Marketing Strategy&#10;SEO & SEM, Google Analytics&#10;Social Media Marketing&#10;Content Creation & Copywriting" rows={6} />
+                      <Textarea value={formData.skills?.join('\n') || ''} onChange={(e) => updateField('skills', e.target.value.split(/[\n,]/))} placeholder="Digital Marketing Strategy&#10;SEO & SEM, Google Analytics&#10;Social Media Marketing&#10;Content Creation & Copywriting" rows={6} />
                     </div>
-                    {formData.skills && formData.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-2">{formData.skills.map((skill, i) => <Badge key={i} variant="secondary" className="text-sm">{skill}</Badge>)}</div>
+                    {compactStringArray(formData.skills).length > 0 && (
+                      <div className="flex flex-wrap gap-2">{compactStringArray(formData.skills).map((skill, i) => <Badge key={i} variant="secondary" className="text-sm">{skill}</Badge>)}</div>
                     )}
                   </div>
                 )}
@@ -837,7 +911,7 @@ export default function ResumeBuilder() {
                     </div>
                     <div className="space-y-2">
                       <Label>Achievements (one per line)</Label>
-                      <Textarea value={formData.achievements?.join('\n') || ''} onChange={(e) => updateField('achievements', e.target.value.split('\n').filter(Boolean))} placeholder="Employee of the Year 2023&#10;Best Marketing Campaign Award&#10;Published in Forbes 30 Under 30" rows={6} />
+                      <Textarea value={formData.achievements?.join('\n') || ''} onChange={(e) => updateField('achievements', splitLinesPreserve(e.target.value))} placeholder="Employee of the Year 2023&#10;Best Marketing Campaign Award&#10;Published in Forbes 30 Under 30" rows={6} />
                     </div>
                   </div>
                 )}
@@ -884,48 +958,69 @@ export default function ResumeBuilder() {
                     {/* Name */}
                     <div className="text-center border-b border-border pb-4">
                       <h1 className="text-lg font-bold tracking-wide uppercase">{formData.name || 'YOUR NAME'}</h1>
-                      {formData.skills && formData.skills.length >= 3 && (
-                        <p className="text-[10px] font-semibold text-muted-foreground mt-1">{formData.skills.slice(0, 3).join(' | ')}</p>
+                      {compactStringArray(formData.skills).length >= 3 && (
+                        <p className="text-[10px] font-semibold text-muted-foreground mt-1">
+                          {compactStringArray(formData.skills).slice(0, 3).join(' | ')}
+                        </p>
                       )}
+
                       <p className="text-[10px] text-muted-foreground mt-1">
                         {[formData.location, formData.email, formData.phone].filter(Boolean).join(' | ')}
-                        {formData.portfolioLink && (
-                          <>
-                            {' | '}
-                            <a href={formData.portfolioLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                              {formData.portfolioLink.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                            </a>
-                          </>
-                        )}
                       </p>
-                      {/* Additional Links Section */}
-                      {formData.links && formData.links.length > 0 && (
-                        <div className="mt-3 pt-2 border-t border-border/50">
-                          <p className="text-[9px] font-semibold text-muted-foreground mb-1.5">LINKS</p>
-                          <div className="flex justify-center gap-3 flex-wrap">
-                            {formData.links.map((link) => (
-                              <a 
-                                key={link.id} 
-                                href={link.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-[9px] text-primary hover:underline flex items-center gap-1"
-                              >
-                                <ExternalLink className="w-2.5 h-2.5" />
-                                <span className="font-medium">{link.label}</span>
-                                <span className="text-muted-foreground">({link.url.replace(/^https?:\/\//, '').replace(/\/$/, '').slice(0, 25)}{link.url.length > 35 ? '...' : ''})</span>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+
+                      {(() => {
+                        const portfolioUrl = normalizeUrl(formData.portfolioLink);
+                        if (!portfolioUrl) return null;
+                        return (
+                          <p className="text-[10px] mt-1">
+                            <a
+                              href={portfolioUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {displayUrl(portfolioUrl)}
+                            </a>
+                          </p>
+                        );
+                      })()}
+
+                      {(() => {
+                        const links = (formData.links || [])
+                          .map((l) => ({ label: (l.label || '').trim(), url: normalizeUrl(l.url) }))
+                          .filter((l) => Boolean(l.url));
+
+                        if (links.length === 0) return null;
+
+                        return (
+                          <p className="text-[9px] mt-2">
+                            {links.map((l, idx) => {
+                              const shown = displayUrl(l.url);
+                              const text = l.label ? `${l.label}: ${shown}` : shown;
+                              return (
+                                <span key={`${l.url}-${idx}`}>
+                                  {idx > 0 && <span className="text-muted-foreground"> | </span>}
+                                  <a
+                                    href={l.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline"
+                                  >
+                                    {text}
+                                  </a>
+                                </span>
+                              );
+                            })}
+                          </p>
+                        );
+                      })()}
                     </div>
 
                     {/* Summary */}
                     {formData.summary && (
                       <div>
                         <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">PROFESSIONAL SUMMARY</h2>
-                        <p className="text-[10px] leading-relaxed">{formData.summary}</p>
+                        <p className="text-[10px] leading-relaxed whitespace-pre-line">{formData.summary}</p>
                       </div>
                     )}
 
@@ -940,7 +1035,7 @@ export default function ResumeBuilder() {
                               <span className="text-muted-foreground">{exp.startDate} – {exp.endDate || 'Present'}</span>
                             </div>
                             <p className="text-muted-foreground italic">{exp.company}</p>
-                            {exp.description && <p className="mt-1">• {exp.description}</p>}
+                            {exp.description && <p className="mt-1 whitespace-pre-line">• {exp.description}</p>}
                             {exp.highlights?.map((h, i) => h && <p key={i}>• {h}</p>)}
                           </div>
                         ))}
@@ -964,11 +1059,11 @@ export default function ResumeBuilder() {
                     )}
 
                     {/* Skills */}
-                    {formData.skills && formData.skills.length > 0 && (
+                    {compactStringArray(formData.skills).length > 0 && (
                       <div>
                         <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">SKILLS</h2>
                         <div className="space-y-0.5">
-                          {formData.skills.map((skill, i) => <p key={i}>• {skill}</p>)}
+                          {compactStringArray(formData.skills).map((skill, i) => <p key={i}>• {skill}</p>)}
                         </div>
                       </div>
                     )}
@@ -983,19 +1078,19 @@ export default function ResumeBuilder() {
                               <span className="font-bold">{proj.name || 'Project'}</span>
                               {proj.link && (
                                 <a
-                                  href={/^https?:\/\//.test(proj.link) ? proj.link : `https://${proj.link}`}
+                                  href={normalizeUrl(proj.link)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-primary hover:underline text-[9px] inline-flex items-center gap-1"
                                 >
                                   <ExternalLink className="w-2.5 h-2.5" />
-                                  {proj.link.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                  {displayUrl(normalizeUrl(proj.link))}
                                 </a>
                               )}
                             </div>
-                            {proj.description && <p className="text-[10px]">{proj.description}</p>}
-                            {proj.technologies && proj.technologies.length > 0 && (
-                              <p className="text-[9px] text-muted-foreground">Tech: {proj.technologies.join(', ')}</p>
+                            {proj.description && <p className="text-[10px] whitespace-pre-line">{proj.description}</p>}
+                            {compactStringArray(proj.technologies).length > 0 && (
+                              <p className="text-[9px] text-muted-foreground">Tech: {compactStringArray(proj.technologies).join(', ')}</p>
                             )}
                           </div>
                         ))}
@@ -1013,11 +1108,11 @@ export default function ResumeBuilder() {
                     )}
 
                     {/* Achievements */}
-                    {formData.achievements && formData.achievements.length > 0 && (
+                    {compactStringArray(formData.achievements).length > 0 && (
                       <div>
                         <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">ACHIEVEMENTS</h2>
                         <div className="space-y-0.5">
-                          {formData.achievements.map((ach, i) => <p key={i}>• {ach}</p>)}
+                          {compactStringArray(formData.achievements).map((ach, i) => <p key={i}>• {ach}</p>)}
                         </div>
                       </div>
                     )}
