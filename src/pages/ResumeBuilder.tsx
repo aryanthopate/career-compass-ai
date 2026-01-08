@@ -182,33 +182,37 @@ export default function ResumeBuilder() {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 50;
+    const margin = 40;
     const contentWidth = pageWidth - margin * 2;
     let y = margin;
     const fontNormal = 'helvetica';
 
     const pdfSkills = compactStringArray(formData.skills);
     const pdfAchievements = compactStringArray(formData.achievements);
+    const topSkills = pdfSkills.slice(0, 3);
+    const remainingSkills = pdfSkills.slice(3);
 
-    const ensureSpace = (needed: number) => {
-      if (y > pageHeight - margin - needed) {
-        doc.addPage();
-        y = margin;
-      }
-    };
+    // Calculate if we need compact mode to fit on one page
+    const totalSections = [
+      formData.summary ? 1 : 0,
+      formData.experience?.length || 0,
+      formData.education?.length || 0,
+      pdfSkills.length > 0 ? 1 : 0,
+      formData.projects?.length || 0,
+      formData.certifications?.length || 0,
+      pdfAchievements.length > 0 ? 1 : 0,
+    ].reduce((a, b) => a + b, 0);
+    const isCompact = totalSections > 8;
+    const lineHeight = isCompact ? 11 : 13;
+    const sectionGap = isCompact ? 6 : 10;
 
-    const addWrappedText = (text: string, x: number, maxWidth: number, lineHeight: number) => {
+    const addWrappedText = (text: string, x: number, maxWidth: number, lh: number) => {
       const paragraphs = String(text || '').split(/\r?\n/);
       paragraphs.forEach((p) => {
         if (p === '') {
-          if (y > pageHeight - margin) {
-            doc.addPage();
-            y = margin;
-          }
-          y += lineHeight;
+          y += lh * 0.5;
           return;
         }
-
         const lines = doc.splitTextToSize(p, maxWidth);
         lines.forEach((line: string) => {
           if (y > pageHeight - margin) {
@@ -216,59 +220,85 @@ export default function ResumeBuilder() {
             y = margin;
           }
           doc.text(line, x, y);
-          y += lineHeight;
+          y += lh;
         });
       });
     };
 
     // Header - Name (large, bold, centered)
     doc.setFont(fontNormal, 'bold');
-    doc.setFontSize(24);
+    doc.setFontSize(20);
     doc.text(formData.name?.toUpperCase() || 'YOUR NAME', pageWidth / 2, y, { align: 'center' });
-    y += 28;
+    y += 22;
 
-    // Professional title/tagline if skills exist
-    if (pdfSkills.length >= 3) {
+    // Top Skills tagline
+    if (topSkills.length > 0) {
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(11);
-      const tagline = pdfSkills.slice(0, 3).join(' | ');
+      doc.setFontSize(10);
+      const tagline = topSkills.join(' | ');
       doc.text(tagline, pageWidth / 2, y, { align: 'center' });
-      y += 18;
+      y += 14;
     }
 
-    // Contact info (single line, centered) with clickable links
+    // Contact info with clickable links
     doc.setFont(fontNormal, 'normal');
-    doc.setFontSize(10);
-    const contactParts = [formData.location, formData.email, formData.phone].filter(Boolean);
-    const contactText = contactParts.join(' | ');
-    doc.text(contactText, pageWidth / 2, y, { align: 'center' });
-    y += 14;
+    doc.setFontSize(9);
+    const contactItems: { text: string; url?: string }[] = [];
+    if (formData.location) contactItems.push({ text: formData.location });
+    if (formData.email) contactItems.push({ text: formData.email, url: `mailto:${formData.email}` });
+    if (formData.phone) contactItems.push({ text: formData.phone, url: `tel:${formData.phone.replace(/\s/g, '')}` });
+
+    // Render contact with clickable email/phone
+    if (contactItems.length > 0) {
+      const separator = ' | ';
+      const parts = contactItems.map((item) => ({
+        text: item.text,
+        url: item.url,
+        width: doc.getTextWidth(item.text),
+      }));
+      const sepWidth = doc.getTextWidth(separator);
+      const totalWidth = parts.reduce((acc, p, i) => acc + p.width + (i > 0 ? sepWidth : 0), 0);
+      let currentX = (pageWidth - totalWidth) / 2;
+
+      parts.forEach((p, i) => {
+        if (i > 0) {
+          doc.setTextColor(0, 0, 0);
+          doc.text(separator, currentX, y);
+          currentX += sepWidth;
+        }
+        if (p.url) {
+          doc.setTextColor(0, 102, 204);
+          doc.textWithLink(p.text, currentX, y, { url: p.url });
+        } else {
+          doc.setTextColor(0, 0, 0);
+          doc.text(p.text, currentX, y);
+        }
+        currentX += p.width;
+      });
+      doc.setTextColor(0, 0, 0);
+      y += 12;
+    }
 
     // Portfolio Link (clickable)
     const portfolioUrl = normalizeUrl(formData.portfolioLink);
     if (portfolioUrl) {
-      doc.setTextColor(0, 102, 204); // Link color
+      doc.setTextColor(0, 102, 204);
       const portfolioDisplay = displayUrl(portfolioUrl);
       const textWidth = doc.getTextWidth(portfolioDisplay);
       const linkX = (pageWidth - textWidth) / 2;
       doc.textWithLink(portfolioDisplay, linkX, y, { url: portfolioUrl });
-      y += 14;
+      y += 12;
       doc.setTextColor(0, 0, 0);
     }
 
-    // Additional Links (clickable + label + url)
+    // Additional Links
     if (formData.links && formData.links.length > 0) {
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       const validLinks = formData.links
-        .map((l) => ({
-          label: (l.label || '').trim(),
-          url: normalizeUrl(l.url),
-        }))
+        .map((l) => ({ label: (l.label || '').trim(), url: normalizeUrl(l.url) }))
         .filter((l) => Boolean(l.url));
 
       if (validLinks.length > 0) {
-        // Render as: Label: domain.com | Label2: domain.com
-        doc.setTextColor(0, 0, 0);
         const separator = ' | ';
         const parts = validLinks.map((l) => {
           const shown = displayUrl(l.url);
@@ -290,184 +320,179 @@ export default function ResumeBuilder() {
           doc.textWithLink(p.text, currentX, y, { url: p.url });
           currentX += p.width;
         });
-
         doc.setTextColor(0, 0, 0);
-        y += 14;
+        y += 12;
       }
     }
     doc.setTextColor(0, 0, 0);
 
     // Divider
     doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(1);
+    doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 20;
+    y += 14;
 
     // Professional Summary
     if (formData.summary) {
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(12);
-      doc.text('PROFESSIONAL SUMMARY', margin, y);
-      y += 5;
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, margin + 140, y);
-      y += 15;
-      doc.setFont(fontNormal, 'normal');
       doc.setFontSize(10);
-      addWrappedText(formData.summary, margin, contentWidth, 14);
+      doc.text('PROFESSIONAL SUMMARY', margin, y);
+      y += 4;
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, margin + 110, y);
       y += 10;
+      doc.setFont(fontNormal, 'normal');
+      doc.setFontSize(9);
+      addWrappedText(formData.summary, margin, contentWidth, lineHeight);
+      y += sectionGap;
     }
 
     // Work Experience
     if (formData.experience && formData.experience.length > 0) {
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(12);
+      doc.setFontSize(10);
       doc.text('WORK EXPERIENCE', margin, y);
-      y += 5;
-      doc.line(margin, y, margin + 110, y);
-      y += 15;
+      y += 4;
+      doc.line(margin, y, margin + 95, y);
+      y += 10;
 
       formData.experience.forEach((exp) => {
         doc.setFont(fontNormal, 'bold');
-        doc.setFontSize(11);
+        doc.setFontSize(9);
         doc.text(exp.position, margin, y);
         const dateText = `${exp.startDate} – ${exp.endDate || 'Present'}`;
         doc.setFont(fontNormal, 'normal');
-        doc.setFontSize(10);
         doc.text(dateText, pageWidth - margin, y, { align: 'right' });
-        y += 14;
-        doc.setFont(fontNormal, 'normal');
+        y += lineHeight;
         doc.text(`${exp.company}`, margin, y);
-        y += 14;
+        y += lineHeight;
         if (exp.description) {
-          addWrappedText(`• ${exp.description}`, margin + 10, contentWidth - 10, 13);
+          addWrappedText(`• ${exp.description}`, margin + 8, contentWidth - 8, lineHeight);
         }
         exp.highlights?.forEach((h) => {
-          if (h) addWrappedText(`• ${h}`, margin + 10, contentWidth - 10, 13);
+          if (h) addWrappedText(`• ${h}`, margin + 8, contentWidth - 8, lineHeight);
         });
-        y += 8;
+        y += 4;
       });
+      y += sectionGap - 4;
     }
 
     // Education
     if (formData.education && formData.education.length > 0) {
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(12);
+      doc.setFontSize(10);
       doc.text('EDUCATION', margin, y);
-      y += 5;
-      doc.line(margin, y, margin + 70, y);
-      y += 15;
+      y += 4;
+      doc.line(margin, y, margin + 60, y);
+      y += 10;
 
       formData.education.forEach((edu) => {
         doc.setFont(fontNormal, 'bold');
-        doc.setFontSize(11);
-        doc.text(`${edu.degree} in ${edu.field}`, margin, y);
+        doc.setFontSize(9);
+        const degreeText = edu.field ? `${edu.degree} in ${edu.field}` : edu.degree;
+        doc.text(degreeText, margin, y);
         doc.setFont(fontNormal, 'normal');
-        doc.setFontSize(10);
-        doc.text(`Graduated: ${edu.endDate}`, pageWidth - margin, y, { align: 'right' });
-        y += 14;
+        doc.text(edu.endDate || '', pageWidth - margin, y, { align: 'right' });
+        y += lineHeight;
         doc.text(`${edu.institution}`, margin, y);
-        y += 16;
+        y += lineHeight + 2;
       });
+      y += sectionGap - 4;
     }
 
-    // Skills
-    if (pdfSkills.length > 0) {
+    // Skills (horizontal layout)
+    if (remainingSkills.length > 0) {
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(12);
-      doc.text('SKILLS', margin, y);
-      y += 5;
-      doc.line(margin, y, margin + 45, y);
-      y += 15;
-      doc.setFont(fontNormal, 'normal');
       doc.setFontSize(10);
-      pdfSkills.forEach((skill) => {
-        addWrappedText(`• ${skill}`, margin, contentWidth, 13);
-      });
-      y += 8;
+      doc.text('SKILLS', margin, y);
+      y += 4;
+      doc.line(margin, y, margin + 40, y);
+      y += 10;
+      doc.setFont(fontNormal, 'normal');
+      doc.setFontSize(9);
+      
+      // Join skills with bullet separator
+      const skillsText = remainingSkills.join(' • ');
+      addWrappedText(skillsText, margin, contentWidth, lineHeight);
+      y += sectionGap;
     }
 
     // Projects
     if (formData.projects && formData.projects.length > 0) {
-      ensureSpace(40);
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(12);
+      doc.setFontSize(10);
       doc.text('PROJECTS', margin, y);
-      y += 5;
-      doc.line(margin, y, margin + 70, y);
-      y += 15;
+      y += 4;
+      doc.line(margin, y, margin + 55, y);
+      y += 10;
 
       formData.projects.forEach((proj) => {
-        ensureSpace(40);
         const projectName = proj.name || 'Project';
-
         doc.setFont(fontNormal, 'bold');
-        doc.setFontSize(11);
-        doc.text(projectName, margin, y);
-
+        doc.setFontSize(9);
+        
         const projectUrl = normalizeUrl(proj.link || '');
         if (projectUrl) {
-          const linkText = displayUrl(projectUrl);
-          doc.setFont(fontNormal, 'normal');
-          doc.setFontSize(9);
-          doc.setTextColor(0, 102, 204);
           const nameWidth = doc.getTextWidth(projectName);
-          const linkWidth = doc.getTextWidth(linkText);
-          const x = Math.min(pageWidth - margin - linkWidth, margin + nameWidth + 10);
-          doc.textWithLink(linkText, x, y, { url: projectUrl });
+          doc.text(projectName, margin, y);
+          doc.setFont(fontNormal, 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(0, 102, 204);
+          const linkText = displayUrl(projectUrl);
+          doc.textWithLink(linkText, margin + nameWidth + 6, y, { url: projectUrl });
           doc.setTextColor(0, 0, 0);
+        } else {
+          doc.text(projectName, margin, y);
         }
+        y += lineHeight;
 
-        y += 14;
         doc.setFont(fontNormal, 'normal');
-        doc.setFontSize(10);
-
+        doc.setFontSize(9);
         if (proj.description) {
-          addWrappedText(`• ${proj.description}`, margin + 10, contentWidth - 10, 13);
+          addWrappedText(proj.description, margin, contentWidth, lineHeight);
         }
         const tech = compactStringArray(proj.technologies);
         if (tech.length > 0) {
-          addWrappedText(`Tech: ${tech.join(', ')}`, margin + 10, contentWidth - 10, 13);
+          doc.setFontSize(8);
+          addWrappedText(`Tech: ${tech.join(', ')}`, margin, contentWidth, 10);
         }
-        y += 6;
+        y += 3;
       });
-
-      y += 6;
+      y += sectionGap - 3;
     }
+
     // Certifications
     if (formData.certifications && formData.certifications.length > 0) {
-      ensureSpace(40);
-      doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(12);
-      doc.text('CERTIFICATIONS', margin, y);
-      y += 5;
-      doc.line(margin, y, margin + 100, y);
-      y += 15;
-      doc.setFont(fontNormal, 'normal');
-      doc.setFontSize(10);
-      formData.certifications
-        .filter((cert) => cert.name || cert.issuer || cert.date)
-        .forEach((cert) => {
-          addWrappedText(`• ${cert.name} - ${cert.issuer} (${cert.date})`, margin, contentWidth, 13);
+      const validCerts = formData.certifications.filter((cert) => cert.name || cert.issuer || cert.date);
+      if (validCerts.length > 0) {
+        doc.setFont(fontNormal, 'bold');
+        doc.setFontSize(10);
+        doc.text('CERTIFICATIONS', margin, y);
+        y += 4;
+        doc.line(margin, y, margin + 85, y);
+        y += 10;
+        doc.setFont(fontNormal, 'normal');
+        doc.setFontSize(9);
+        validCerts.forEach((cert) => {
+          addWrappedText(`• ${cert.name} - ${cert.issuer} (${cert.date})`, margin, contentWidth, lineHeight);
         });
-      y += 8;
+        y += sectionGap;
+      }
     }
 
     // Achievements
     if (pdfAchievements.length > 0) {
-      ensureSpace(40);
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(12);
-      doc.text('ACHIEVEMENTS', margin, y);
-      y += 5;
-      doc.line(margin, y, margin + 95, y);
-      y += 15;
-      doc.setFont(fontNormal, 'normal');
       doc.setFontSize(10);
+      doc.text('ACHIEVEMENTS', margin, y);
+      y += 4;
+      doc.line(margin, y, margin + 80, y);
+      y += 10;
+      doc.setFont(fontNormal, 'normal');
+      doc.setFontSize(9);
       pdfAchievements.forEach((ach) => {
-        addWrappedText(`• ${ach}`, margin, contentWidth, 13);
+        addWrappedText(`• ${ach}`, margin, contentWidth, lineHeight);
       });
-      y += 8;
     }
 
     doc.save(`${formData.name || 'resume'}-ATS-Friendly.pdf`);
@@ -1008,7 +1033,15 @@ export default function ResumeBuilder() {
                       )}
 
                       <p className="text-[10px] text-muted-foreground mt-1">
-                        {[formData.location, formData.email, formData.phone].filter(Boolean).join(' | ')}
+                        {formData.location && <span>{formData.location}</span>}
+                        {formData.location && formData.email && <span> | </span>}
+                        {formData.email && (
+                          <a href={`mailto:${formData.email}`} className="text-primary hover:underline">{formData.email}</a>
+                        )}
+                        {(formData.location || formData.email) && formData.phone && <span> | </span>}
+                        {formData.phone && (
+                          <a href={`tel:${formData.phone.replace(/\s/g, '')}`} className="text-primary hover:underline">{formData.phone}</a>
+                        )}
                       </p>
 
                       {(() => {
@@ -1092,8 +1125,8 @@ export default function ResumeBuilder() {
                         {formData.education.map((edu) => (
                           <div key={edu.id} className="mb-2">
                             <div className="flex justify-between">
-                              <span className="font-bold">{edu.degree} in {edu.field}</span>
-                              <span className="text-muted-foreground">Graduated: {edu.endDate}</span>
+                              <span className="font-bold">{edu.field ? `${edu.degree} in ${edu.field}` : edu.degree}</span>
+                              <span className="text-muted-foreground">{edu.endDate}</span>
                             </div>
                             <p className="text-muted-foreground italic">{edu.institution}</p>
                           </div>
@@ -1101,13 +1134,11 @@ export default function ResumeBuilder() {
                       </div>
                     )}
 
-                    {/* Skills */}
-                    {compactStringArray(formData.skills).length > 0 && (
+                    {/* Skills - horizontal */}
+                    {compactStringArray(formData.skills).slice(3).length > 0 && (
                       <div>
                         <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">SKILLS</h2>
-                        <div className="space-y-0.5">
-                          {compactStringArray(formData.skills).map((skill, i) => <p key={i}>• {skill}</p>)}
-                        </div>
+                        <p className="text-[10px]">{compactStringArray(formData.skills).slice(3).join(' • ')}</p>
                       </div>
                     )}
 

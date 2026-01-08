@@ -20,7 +20,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTheme } from '@/lib/ThemeContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useAdmin } from '@/lib/useAdmin';
@@ -43,7 +43,8 @@ import {
   Gamepad2,
   ChevronRight,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const productItems = [
   { 
@@ -96,6 +97,11 @@ const productItems = [
   },
 ];
 
+interface ProfileData {
+  full_name: string | null;
+  avatar_url: string | null;
+}
+
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
@@ -103,6 +109,25 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    } else {
+      setProfile(null);
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('user_id', user.id)
+      .single();
+    if (data) setProfile(data);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -110,9 +135,17 @@ export function Header() {
     setMobileMenuOpen(false);
   };
 
-  const getInitials = (email: string | undefined) => {
+  const getInitials = (name: string | null | undefined, email: string | undefined) => {
+    if (name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
     if (!email) return 'U';
     return email[0].toUpperCase();
+  };
+
+  const getDisplayName = () => {
+    if (profile?.full_name) return profile.full_name;
+    return user?.email;
   };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -224,12 +257,13 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 pl-2 pr-3 hidden sm:flex">
                     <Avatar className="w-7 h-7">
+                      {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt="Avatar" />}
                       <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                        {getInitials(user.email)}
+                        {getInitials(profile?.full_name, user.email)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden md:inline text-sm max-w-32 truncate">
-                      {user.email}
+                      {getDisplayName()}
                     </span>
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </Button>
@@ -262,12 +296,13 @@ export function Header() {
                   <SheetHeader className="p-6 pb-4 border-b">
                     <SheetTitle className="flex items-center gap-3">
                       <Avatar className="w-10 h-10">
+                        {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt="Avatar" />}
                         <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                          {getInitials(user.email)}
+                          {getInitials(profile?.full_name, user.email)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="text-left">
-                        <p className="font-medium text-sm">{user.email}</p>
+                        <p className="font-medium text-sm">{getDisplayName()}</p>
                         <p className="text-xs text-muted-foreground">Welcome back!</p>
                       </div>
                     </SheetTitle>

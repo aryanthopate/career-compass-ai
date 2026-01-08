@@ -349,7 +349,7 @@ export default function AdminContacts() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">Message</p>
-                <div className="p-4 rounded-lg bg-muted/50 whitespace-pre-wrap">
+                <div className="p-4 rounded-lg bg-muted/50 whitespace-pre-wrap break-words max-h-60 overflow-y-auto">
                   {selectedContact.message}
                 </div>
               </div>
