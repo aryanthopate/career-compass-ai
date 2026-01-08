@@ -153,10 +153,11 @@ export function CodeBlock({ code, language = 'code' }: CodeBlockProps) {
       </div>
       
       {/* Code */}
-      <div className="bg-zinc-950 overflow-x-auto">
-        <pre className="p-4 overflow-x-auto">
+      <div className="bg-zinc-950 overflow-x-auto max-w-full">
+        <pre className="p-4 overflow-x-auto max-w-full">
           <code 
-            className="text-sm font-mono leading-relaxed block"
+            className="text-sm font-mono leading-relaxed block whitespace-pre overflow-x-auto"
+            style={{ wordBreak: 'keep-all' }}
             dangerouslySetInnerHTML={{ __html: highlightCode(code) }}
           />
         </pre>

@@ -106,28 +106,25 @@ export default function SharedResume() {
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            {[resume.location, resume.email, resume.phone].filter(Boolean).join(' | ')}
+            {resume.location && <span>{resume.location}</span>}
+            {resume.location && resume.email && <span> | </span>}
+            {resume.email && <a href={`mailto:${resume.email}`} className="text-primary hover:underline">{resume.email}</a>}
+            {(resume.location || resume.email) && resume.phone && <span> | </span>}
+            {resume.phone && <a href={`tel:${resume.phone.replace(/\s/g, '')}`} className="text-primary hover:underline">{resume.phone}</a>}
           </p>
           {(() => {
             const portfolioUrl = normalizeUrl(resume.portfolioLink);
             if (!portfolioUrl) return null;
             return (
               <p className="text-xs">
-                <a
-                  href={portfolioUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
+                <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                   {displayUrl(portfolioUrl)}
                 </a>
               </p>
             );
           })()}
           {(() => {
-            const links = (resume.links || [])
-              .map((l) => ({ label: (l.label || '').trim(), url: normalizeUrl(l.url) }))
-              .filter((l) => l.url);
+            const links = (resume.links || []).map((l) => ({ label: (l.label || '').trim(), url: normalizeUrl(l.url) })).filter((l) => l.url);
             if (links.length === 0) return null;
             return (
               <p className="text-xs">
@@ -136,14 +133,7 @@ export default function SharedResume() {
                   return (
                     <span key={idx}>
                       {idx > 0 && <span className="text-muted-foreground"> | </span>}
-                      <a
-                        href={l.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        {text}
-                      </a>
+                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
                     </span>
                   );
                 })}
@@ -187,8 +177,8 @@ export default function SharedResume() {
             {resume.education.map((edu) => (
               <div key={edu.id} className="mb-2">
                 <div className="flex justify-between flex-wrap gap-2">
-                  <span className="font-bold">{edu.degree} in {edu.field}</span>
-                  <span className="text-muted-foreground">Graduated: {edu.endDate}</span>
+                  <span className="font-bold">{edu.field ? `${edu.degree} in ${edu.field}` : edu.degree}</span>
+                  <span className="text-muted-foreground">{edu.endDate}</span>
                 </div>
                 <p className="text-muted-foreground italic">{edu.institution}</p>
               </div>
@@ -196,15 +186,11 @@ export default function SharedResume() {
           </section>
         )}
 
-        {/* Skills */}
-        {pdfSkills.length > 0 && (
+        {/* Skills - horizontal */}
+        {pdfSkills.slice(3).length > 0 && (
           <section>
             <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">SKILLS</h2>
-            <ul className="list-disc list-inside">
-              {pdfSkills.map((skill, i) => (
-                <li key={i}>{skill}</li>
-              ))}
-            </ul>
+            <p>{pdfSkills.slice(3).join(' • ')}</p>
           </section>
         )}
 
