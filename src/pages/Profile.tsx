@@ -106,45 +106,91 @@ export default function Profile() {
 
   const loadProfile = async () => {
     if (!user) return;
-    
+
+    setLoading(true);
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error loading profile:', error);
-    } else if (data) {
-      setProfile(data);
-      setFormData({
-        full_name: data.full_name || '',
-        avatar_url: data.avatar_url || '',
-      });
+      setLoading(false);
+      return;
     }
+
+    let nextProfile = data as ProfileData | null;
+
+    // If the user doesn't have a profile row yet, create it so Profile page works.
+    if (!nextProfile) {
+      const { data: created, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          email: user.email || null,
+          full_name: null,
+          avatar_url: null,
+        })
+        .select('*')
+        .single();
+
+      if (createError) {
+        console.error('Error creating profile:', createError);
+        setLoading(false);
+        return;
+      }
+
+      nextProfile = created as ProfileData;
+    }
+
+    setProfile(nextProfile);
+    setFormData({
+      full_name: nextProfile.full_name || '',
+      avatar_url: nextProfile.avatar_url || '',
+    });
+
     setLoading(false);
   };
 
   const saveProfile = async () => {
-    if (!user || !profile) return;
-    
+    if (!user) return;
+
     setSaving(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        full_name: formData.full_name,
-        avatar_url: formData.avatar_url,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', user.id);
+
+    const payload = {
+      full_name: formData.full_name || null,
+      avatar_url: formData.avatar_url || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = profile
+      ? await supabase
+          .from('profiles')
+          .update(payload)
+          .eq('user_id', user.id)
+          .select('*')
+          .single()
+      : await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            email: user.email || null,
+            ...payload,
+          })
+          .select('*')
+          .single();
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Profile saved', description: 'Your profile has been updated.' });
-      setEditDialogOpen(false);
-      loadProfile();
+      setSaving(false);
+      return;
     }
+
+    setProfile(data as ProfileData);
+    toast({ title: 'Profile saved', description: 'Your profile has been updated.' });
+    setEditDialogOpen(false);
     setSaving(false);
   };
 
@@ -153,7 +199,7 @@ export default function Profile() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, avatar_url: reader.result as string }));
+        setFormData((prev) => ({ ...prev, avatar_url: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -183,7 +229,12 @@ export default function Profile() {
 
   const getInitials = (name: string | null, email: string | null) => {
     if (name) {
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
     }
     if (email) {
       return email[0].toUpperCase();
@@ -192,7 +243,7 @@ export default function Profile() {
   };
 
   const latestResume = resumes[0];
-  const latestAnalysis = analyses[analyses.length - 1];
+  const latestAnalysis = analyses[0];
 
   const stats = [
     { label: 'Resumes', value: resumes.length, icon: FileText, color: 'text-blue-500', bg: 'bg-blue-500/10' },
