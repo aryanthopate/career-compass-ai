@@ -20,7 +20,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useResume, Resume, Education, Experience, Project, Link as ResumeLink, Certification } from '@/lib/ResumeContext';
+import { useResume, Resume, Education, Experience, Project, Link as ResumeLink, Certification, EducationDateType } from '@/lib/ResumeContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/AuthContext';
 import {
@@ -392,7 +393,9 @@ export default function ResumeBuilder() {
         const degreeText = edu.field ? `${edu.degree} in ${edu.field}` : edu.degree;
         doc.text(degreeText, margin, y);
         doc.setFont(fontNormal, 'normal');
-        doc.text(edu.endDate || '', pageWidth - margin, y, { align: 'right' });
+        const dateLabel = getEducationDateLabel(edu.dateType);
+        const dateText = edu.endDate ? `${dateLabel}: ${edu.endDate}` : '';
+        doc.text(dateText, pageWidth - margin, y, { align: 'right' });
         y += lineHeight;
         doc.text(`${edu.institution}`, margin, y);
         y += lineHeight + 2;
@@ -514,14 +517,23 @@ export default function ResumeBuilder() {
 
   // Section CRUD helpers
   const addEducation = () => {
-    const newEdu: Education = { id: crypto.randomUUID(), institution: '', degree: '', field: '', startDate: '', endDate: '' };
+    const newEdu: Education = { id: crypto.randomUUID(), institution: '', degree: '', field: '', startDate: '', endDate: '', dateType: 'graduated' };
     updateField('education', [...(formData.education || []), newEdu]);
   };
-  const updateEducation = (id: string, field: keyof Education, value: string) => {
+  const updateEducation = (id: string, field: keyof Education, value: string | EducationDateType) => {
     const updated = formData.education?.map((edu) => edu.id === id ? { ...edu, [field]: value } : edu);
     updateField('education', updated);
   };
   const removeEducation = (id: string) => updateField('education', formData.education?.filter((edu) => edu.id !== id));
+
+  const getEducationDateLabel = (dateType?: EducationDateType) => {
+    switch (dateType) {
+      case 'passed': return 'Passed';
+      case 'expected': return 'Expected';
+      case 'pursuing': return 'Pursuing';
+      default: return 'Graduated';
+    }
+  };
 
   const addExperience = () => {
     const newExp: Experience = { id: crypto.randomUUID(), company: '', position: '', startDate: '', endDate: '', description: '', highlights: [] };
@@ -881,11 +893,27 @@ export default function ResumeBuilder() {
                       <div key={edu.id} className="p-5 rounded-xl border border-border bg-secondary/20 space-y-4">
                         <div className="flex items-center justify-between"><Badge variant="outline">Education {index + 1}</Badge><Button variant="ghost" size="sm" onClick={() => removeEducation(edu.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button></div>
                         <div className="grid sm:grid-cols-2 gap-4">
-                          <div className="space-y-2"><Label>Degree</Label><Input value={edu.degree} onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)} placeholder="Bachelor" /></div>
-                          <div className="space-y-2"><Label>Field of Study</Label><Input value={edu.field} onChange={(e) => updateEducation(edu.id, 'field', e.target.value)} placeholder="Marketing" /></div>
+                          <div className="space-y-2"><Label>Degree</Label><Input value={edu.degree} onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)} placeholder="Bachelor / 12th / 10th" /></div>
+                          <div className="space-y-2"><Label>Field of Study</Label><Input value={edu.field} onChange={(e) => updateEducation(edu.id, 'field', e.target.value)} placeholder="Marketing / Science / Commerce" /></div>
                           <div className="space-y-2 sm:col-span-2"><Label>Institution</Label><Input value={edu.institution} onChange={(e) => updateEducation(edu.id, 'institution', e.target.value)} placeholder="University of Sydney, Sydney, NSW" /></div>
                           <div className="space-y-2"><Label>Start Date</Label><Input value={edu.startDate} onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)} placeholder="2014" /></div>
-                          <div className="space-y-2"><Label>Graduation Date</Label><Input value={edu.endDate} onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)} placeholder="2018" /></div>
+                          <div className="space-y-2">
+                            <Label>Completion Date</Label>
+                            <div className="flex gap-2">
+                              <Input value={edu.endDate} onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)} placeholder="2018" className="flex-1" />
+                              <Select value={edu.dateType || 'graduated'} onValueChange={(value: EducationDateType) => updateEducation(edu.id, 'dateType', value)}>
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="graduated">Graduated</SelectItem>
+                                  <SelectItem value="passed">Passed</SelectItem>
+                                  <SelectItem value="expected">Expected</SelectItem>
+                                  <SelectItem value="pursuing">Pursuing</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1126,7 +1154,9 @@ export default function ResumeBuilder() {
                           <div key={edu.id} className="mb-2">
                             <div className="flex justify-between">
                               <span className="font-bold">{edu.field ? `${edu.degree} in ${edu.field}` : edu.degree}</span>
-                              <span className="text-muted-foreground">{edu.endDate}</span>
+                              <span className="text-muted-foreground">
+                                {edu.endDate && `${getEducationDateLabel(edu.dateType)}: ${edu.endDate}`}
+                              </span>
                             </div>
                             <p className="text-muted-foreground italic">{edu.institution}</p>
                           </div>

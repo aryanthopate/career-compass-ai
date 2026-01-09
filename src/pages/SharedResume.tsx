@@ -3,7 +3,16 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Resume, Education, Experience, Project, Link as ResumeLink, Certification } from '@/lib/ResumeContext';
+import type { Resume, Education, Experience, Project, Link as ResumeLink, Certification, EducationDateType } from '@/lib/ResumeContext';
+
+const getEducationDateLabel = (dateType?: EducationDateType) => {
+  switch (dateType) {
+    case 'passed': return 'Passed';
+    case 'expected': return 'Expected';
+    case 'pursuing': return 'Pursuing';
+    default: return 'Graduated';
+  }
+};
 
 export default function SharedResume() {
   const { token } = useParams<{ token: string }>();
@@ -178,7 +187,9 @@ export default function SharedResume() {
               <div key={edu.id} className="mb-2">
                 <div className="flex justify-between flex-wrap gap-2">
                   <span className="font-bold">{edu.field ? `${edu.degree} in ${edu.field}` : edu.degree}</span>
-                  <span className="text-muted-foreground">{edu.endDate}</span>
+                  <span className="text-muted-foreground">
+                    {edu.endDate && `${getEducationDateLabel(edu.dateType)}: ${edu.endDate}`}
+                  </span>
                 </div>
                 <p className="text-muted-foreground italic">{edu.institution}</p>
               </div>
