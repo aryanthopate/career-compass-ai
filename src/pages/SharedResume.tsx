@@ -105,44 +105,61 @@ export default function SharedResume() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center py-10 px-4">
       {/* Resume Card */}
-      <div className="w-full max-w-3xl bg-card border border-border rounded-xl p-8 md:p-12 shadow-lg print:shadow-none print:border-none space-y-6 text-sm">
+      <div className="w-full max-w-3xl bg-card border border-border rounded-xl p-8 md:p-12 shadow-lg print:shadow-none print:border-none space-y-6 text-sm md:text-base">
         {/* Header */}
         <header className="text-center border-b border-border pb-4 space-y-2">
-          <h1 className="text-2xl font-bold tracking-wide uppercase">{resume.name || 'Resume'}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-wide uppercase">{resume.name || 'Resume'}</h1>
           {pdfSkills.length >= 3 && (
-            <p className="text-sm font-semibold text-muted-foreground">
+            <p className="text-sm md:text-base font-semibold text-muted-foreground">
               {pdfSkills.slice(0, 3).join(' | ')}
             </p>
           )}
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {resume.location && <span>{resume.location}</span>}
             {resume.location && resume.email && <span> | </span>}
-            {resume.email && <a href={`mailto:${resume.email}`} className="text-primary hover:underline">{resume.email}</a>}
+            {resume.email && (
+              <a href={`mailto:${resume.email}`} className="text-primary hover:underline">
+                {resume.email}
+              </a>
+            )}
             {(resume.location || resume.email) && resume.phone && <span> | </span>}
-            {resume.phone && <a href={`tel:${resume.phone.replace(/\s/g, '')}`} className="text-primary hover:underline">{resume.phone}</a>}
+            {resume.phone && (
+              <a href={`tel:${resume.phone.replace(/\s/g, '')}`} className="text-primary hover:underline">
+                {resume.phone}
+              </a>
+            )}
           </p>
           {(() => {
             const portfolioUrl = normalizeUrl(resume.portfolioLink);
             if (!portfolioUrl) return null;
             return (
-              <p className="text-xs">
-                <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              <p className="text-sm">
+                <a
+                  href={portfolioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
                   {displayUrl(portfolioUrl)}
                 </a>
               </p>
             );
           })()}
           {(() => {
-            const links = (resume.links || []).map((l) => ({ label: (l.label || '').trim(), url: normalizeUrl(l.url) })).filter((l) => l.url);
+            const links = (resume.links || [])
+              .map((l) => ({ label: (l.label || '').trim(), url: normalizeUrl(l.url) }))
+              .filter((l) => l.url);
             if (links.length === 0) return null;
             return (
-              <p className="text-xs">
+              <p className="text-sm">
                 {links.map((l, idx) => {
                   const text = l.label ? `${l.label}: ${displayUrl(l.url)}` : displayUrl(l.url);
                   return (
                     <span key={idx}>
                       {idx > 0 && <span className="text-muted-foreground"> | </span>}
-                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{text}</a>
+                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        {text}
+                      </a>
                     </span>
                   );
                 })}
@@ -154,7 +171,7 @@ export default function SharedResume() {
         {/* Summary */}
         {resume.summary && (
           <section>
-            <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">PROFESSIONAL SUMMARY</h2>
+            <h2 className="text-sm md:text-base font-bold border-b border-foreground/30 pb-1 mb-2">PROFESSIONAL SUMMARY</h2>
             <p className="whitespace-pre-line leading-relaxed">{resume.summary}</p>
           </section>
         )}
@@ -162,7 +179,7 @@ export default function SharedResume() {
         {/* Experience */}
         {resume.experience.length > 0 && (
           <section>
-            <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">WORK EXPERIENCE</h2>
+            <h2 className="text-sm md:text-base font-bold border-b border-foreground/30 pb-1 mb-2">WORK EXPERIENCE</h2>
             {resume.experience.map((exp) => (
               <div key={exp.id} className="mb-4">
                 <div className="flex justify-between flex-wrap gap-2">
@@ -182,7 +199,7 @@ export default function SharedResume() {
         {/* Education */}
         {resume.education.length > 0 && (
           <section>
-            <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">EDUCATION</h2>
+            <h2 className="text-sm md:text-base font-bold border-b border-foreground/30 pb-1 mb-2">EDUCATION</h2>
             {resume.education.map((edu) => (
               <div key={edu.id} className="mb-2">
                 <div className="flex justify-between flex-wrap gap-2">
@@ -200,7 +217,7 @@ export default function SharedResume() {
         {/* Skills - horizontal */}
         {pdfSkills.slice(3).length > 0 && (
           <section>
-            <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">SKILLS</h2>
+            <h2 className="text-sm md:text-base font-bold border-b border-foreground/30 pb-1 mb-2">SKILLS</h2>
             <p>{pdfSkills.slice(3).join(' • ')}</p>
           </section>
         )}

@@ -193,7 +193,7 @@ export default function ResumeBuilder() {
     const topSkills = pdfSkills.slice(0, 3);
     const remainingSkills = pdfSkills.slice(3);
 
-    // Calculate if we need compact mode to fit on one page
+    // Compact mode only tweaks spacing a bit; we still allow multi-page output for reliability.
     const totalSections = [
       formData.summary ? 1 : 0,
       formData.experience?.length || 0,
@@ -203,9 +203,10 @@ export default function ResumeBuilder() {
       formData.certifications?.length || 0,
       pdfAchievements.length > 0 ? 1 : 0,
     ].reduce((a, b) => a + b, 0);
-    const isCompact = totalSections > 8;
-    const lineHeight = isCompact ? 11 : 13;
-    const sectionGap = isCompact ? 6 : 10;
+
+    const isCompact = totalSections > 10;
+    const lineHeight = isCompact ? 13 : 15;
+    const sectionGap = isCompact ? 8 : 12;
 
     const addWrappedText = (text: string, x: number, maxWidth: number, lh: number) => {
       const paragraphs = String(text || '').split(/\r?\n/);
@@ -228,22 +229,22 @@ export default function ResumeBuilder() {
 
     // Header - Name (large, bold, centered)
     doc.setFont(fontNormal, 'bold');
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.text(formData.name?.toUpperCase() || 'YOUR NAME', pageWidth / 2, y, { align: 'center' });
-    y += 22;
+    y += 26;
 
     // Top Skills tagline
     if (topSkills.length > 0) {
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(12);
       const tagline = topSkills.join(' | ');
       doc.text(tagline, pageWidth / 2, y, { align: 'center' });
-      y += 14;
+      y += 16;
     }
 
     // Contact info with clickable links
     doc.setFont(fontNormal, 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     const contactItems: { text: string; url?: string }[] = [];
     if (formData.location) contactItems.push({ text: formData.location });
     if (formData.email) contactItems.push({ text: formData.email, url: `mailto:${formData.email}` });
@@ -336,14 +337,14 @@ export default function ResumeBuilder() {
     // Professional Summary
     if (formData.summary) {
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.text('PROFESSIONAL SUMMARY', margin, y);
       y += 4;
       doc.setLineWidth(0.3);
-      doc.line(margin, y, margin + 110, y);
-      y += 10;
+      doc.line(margin, y, margin + 120, y);
+      y += 12;
       doc.setFont(fontNormal, 'normal');
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       addWrappedText(formData.summary, margin, contentWidth, lineHeight);
       y += sectionGap;
     }
@@ -351,15 +352,15 @@ export default function ResumeBuilder() {
     // Work Experience
     if (formData.experience && formData.experience.length > 0) {
       doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.text('WORK EXPERIENCE', margin, y);
       y += 4;
-      doc.line(margin, y, margin + 95, y);
-      y += 10;
+      doc.line(margin, y, margin + 105, y);
+      y += 12;
 
       formData.experience.forEach((exp) => {
         doc.setFont(fontNormal, 'bold');
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.text(exp.position, margin, y);
         const dateText = `${exp.startDate} – ${exp.endDate || 'Present'}`;
         doc.setFont(fontNormal, 'normal');
@@ -1050,17 +1051,17 @@ export default function ResumeBuilder() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <div className="bg-background border border-border rounded-lg p-6 text-xs space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                  <div className="bg-background border border-border rounded-lg p-6 text-sm space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
                     {/* Name */}
                     <div className="text-center border-b border-border pb-4">
-                      <h1 className="text-lg font-bold tracking-wide uppercase">{formData.name || 'YOUR NAME'}</h1>
+                      <h1 className="text-2xl font-bold tracking-wide uppercase">{formData.name || 'YOUR NAME'}</h1>
                       {compactStringArray(formData.skills).length >= 3 && (
-                        <p className="text-[10px] font-semibold text-muted-foreground mt-1">
+                        <p className="text-sm font-semibold text-muted-foreground mt-1">
                           {compactStringArray(formData.skills).slice(0, 3).join(' | ')}
                         </p>
                       )}
 
-                      <p className="text-[10px] text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {formData.location && <span>{formData.location}</span>}
                         {formData.location && formData.email && <span> | </span>}
                         {formData.email && (
@@ -1076,7 +1077,7 @@ export default function ResumeBuilder() {
                         const portfolioUrl = normalizeUrl(formData.portfolioLink);
                         if (!portfolioUrl) return null;
                         return (
-                          <p className="text-[10px] mt-1">
+                          <p className="text-sm mt-1">
                             <a
                               href={portfolioUrl}
                               target="_blank"
@@ -1097,7 +1098,7 @@ export default function ResumeBuilder() {
                         if (links.length === 0) return null;
 
                         return (
-                          <p className="text-[9px] mt-2">
+                          <p className="text-sm mt-2">
                             {links.map((l, idx) => {
                               const shown = displayUrl(l.url);
                               const text = l.label ? `${l.label}: ${shown}` : shown;
@@ -1123,8 +1124,8 @@ export default function ResumeBuilder() {
                     {/* Summary */}
                     {formData.summary && (
                       <div>
-                        <h2 className="text-[11px] font-bold border-b border-foreground/30 pb-1 mb-2">PROFESSIONAL SUMMARY</h2>
-                        <p className="text-[10px] leading-relaxed whitespace-pre-line">{formData.summary}</p>
+                        <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">PROFESSIONAL SUMMARY</h2>
+                        <p className="text-sm leading-relaxed whitespace-pre-line">{formData.summary}</p>
                       </div>
                     )}
 
