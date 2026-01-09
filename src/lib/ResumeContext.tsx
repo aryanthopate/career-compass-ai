@@ -3,6 +3,8 @@ import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 
+export type EducationDateType = 'graduated' | 'passed' | 'expected' | 'pursuing';
+
 export interface Education {
   id: string;
   institution: string;
@@ -11,6 +13,7 @@ export interface Education {
   startDate: string;
   endDate: string;
   gpa?: string;
+  dateType?: EducationDateType;
 }
 
 export interface Experience {

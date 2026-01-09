@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useResume } from '@/lib/ResumeContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Compass,
   Loader2,
@@ -39,66 +40,52 @@ export default function CareerVerdict() {
 
   const generateVerdict = async () => {
     setGenerating(true);
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('career-verdict', {
+        body: {
+          resume: currentResume,
+          analyses: analyses.slice(0, 3),
+          skillGaps: skillGaps.slice(0, 3),
+          interviewAttempts: interviewAttempts.slice(0, 3),
+        },
+      });
 
-    const latestAnalysis = analyses[analyses.length - 1];
-    const latestSkillGap = skillGaps[skillGaps.length - 1];
-    const latestInterview = interviewAttempts[interviewAttempts.length - 1];
+      if (error) {
+        throw new Error(error.message);
+      }
 
-    const resumeScore = latestAnalysis?.score || 50;
-    const skillScore = latestSkillGap?.readinessScore || 60;
-    const interviewScore = latestInterview?.evaluation
-      ? (latestInterview.evaluation.confidenceScore +
-          latestInterview.evaluation.clarityScore +
-          latestInterview.evaluation.technicalScore) / 3
-      : 55;
+      if (data.error) {
+        throw new Error(data.error);
+      }
 
-    const overallScore = Math.round((resumeScore + skillScore + interviewScore) / 3);
+      const verdict = {
+        hiringProbability: data.hiringProbability,
+        resumeReadiness: data.resumeReadiness,
+        interviewReadiness: data.interviewReadiness,
+        skillReadiness: data.skillReadiness,
+        salaryRange: data.salaryRange,
+        topRisks: data.topRisks,
+        nextActions: data.nextActions,
+        recommendedRoles: data.recommendedRoles,
+        rolesToAvoid: data.rolesToAvoid,
+      };
 
-    const risks: string[] = [];
-    if (resumeScore < 60) risks.push('Resume needs significant improvement');
-    if (skillScore < 60) risks.push('Critical skill gaps need addressing');
-    if (interviewScore < 60) risks.push('Interview performance needs work');
-    if (!currentResume?.experience?.length) risks.push('Lack of professional experience');
-    if (!currentResume?.projects?.length) risks.push('No projects to demonstrate skills');
-
-    const actions: string[] = [];
-    if (resumeScore < 70) actions.push('Enhance resume with quantifiable achievements');
-    if (skillScore < 70) actions.push('Focus on learning critical missing skills');
-    if (interviewScore < 70) actions.push('Practice mock interviews regularly');
-    actions.push('Network with professionals in your target field');
-    actions.push('Apply to positions matching your skill level');
-
-    const roles = currentResume?.skills?.some(s => s.toLowerCase().includes('react'))
-      ? ['Frontend Developer', 'Full Stack Developer', 'UI Engineer']
-      : currentResume?.skills?.some(s => s.toLowerCase().includes('python'))
-      ? ['Backend Developer', 'Data Analyst', 'DevOps Engineer']
-      : ['Software Engineer', 'Web Developer', 'Technical Support'];
-
-    const avoid = skillScore < 50
-      ? ['Senior positions', 'Lead roles', 'Architect positions']
-      : ['Highly specialized roles without relevant experience'];
-
-    const baseSalary = 60000;
-    const multiplier = overallScore / 100;
-    const salaryMin = Math.round(baseSalary * multiplier * 0.85);
-    const salaryMax = Math.round(baseSalary * multiplier * 1.25);
-
-    const verdict = {
-      hiringProbability: overallScore,
-      resumeReadiness: resumeScore,
-      interviewReadiness: interviewScore,
-      skillReadiness: skillScore,
-      salaryRange: { min: salaryMin, max: salaryMax },
-      topRisks: risks.slice(0, 3),
-      nextActions: actions.slice(0, 4),
-      recommendedRoles: roles,
-      rolesToAvoid: avoid,
-    };
-
-    saveCareerVerdict(verdict);
-    setGenerating(false);
-    toast({ title: 'Verdict Generated', description: `Your hiring probability is ${overallScore}%` });
+      await saveCareerVerdict(verdict);
+      toast({ 
+        title: 'AI Verdict Generated', 
+        description: `Your hiring probability is ${verdict.hiringProbability}%` 
+      });
+    } catch (error) {
+      console.error('Career verdict error:', error);
+      toast({ 
+        title: 'Generation Failed', 
+        description: 'Could not generate verdict. Please try again.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const getScoreColor = (score: number) => {
