@@ -102,27 +102,30 @@ export default function SharedResume() {
   const pdfSkills = compactStringArray(resume.skills);
   const pdfAchievements = compactStringArray(resume.achievements);
 
+  const topSkills = pdfSkills.slice(0, 3);
+  const remainingSkills = pdfSkills.slice(3);
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center py-10 px-4">
       {/* Resume Card */}
-      <div className="w-full max-w-3xl bg-card border border-border rounded-xl p-8 md:p-12 shadow-lg print:shadow-none print:border-none space-y-6 text-sm md:text-base">
+      <div className="w-full max-w-3xl bg-card border border-border rounded-xl p-8 md:p-12 shadow-lg print:shadow-none print:border-none space-y-5 text-sm">
         {/* Header */}
-        <header className="text-center border-b border-border pb-4 space-y-2">
+        <header className="text-center border-b border-border pb-4 space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold tracking-wide uppercase">{resume.name || 'Resume'}</h1>
-          {pdfSkills.length >= 3 && (
-            <p className="text-sm md:text-base font-semibold text-muted-foreground">
-              {pdfSkills.slice(0, 3).join(' | ')}
+          {topSkills.length > 0 && (
+            <p className="text-sm font-semibold text-muted-foreground">
+              {topSkills.join('  •  ')}
             </p>
           )}
           <p className="text-sm text-muted-foreground">
             {resume.location && <span>{resume.location}</span>}
-            {resume.location && resume.email && <span> | </span>}
+            {resume.location && resume.email && <span className="mx-1">|</span>}
             {resume.email && (
               <a href={`mailto:${resume.email}`} className="text-primary hover:underline">
                 {resume.email}
               </a>
             )}
-            {(resume.location || resume.email) && resume.phone && <span> | </span>}
+            {(resume.location || resume.email) && resume.phone && <span className="mx-1">|</span>}
             {resume.phone && (
               <a href={`tel:${resume.phone.replace(/\s/g, '')}`} className="text-primary hover:underline">
                 {resume.phone}
@@ -134,12 +137,7 @@ export default function SharedResume() {
             if (!portfolioUrl) return null;
             return (
               <p className="text-sm">
-                <a
-                  href={portfolioUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
+                <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                   {displayUrl(portfolioUrl)}
                 </a>
               </p>
@@ -156,7 +154,7 @@ export default function SharedResume() {
                   const text = l.label ? `${l.label}: ${displayUrl(l.url)}` : displayUrl(l.url);
                   return (
                     <span key={idx}>
-                      {idx > 0 && <span className="text-muted-foreground"> | </span>}
+                      {idx > 0 && <span className="text-muted-foreground mx-1">|</span>}
                       <a href={l.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                         {text}
                       </a>
@@ -171,25 +169,25 @@ export default function SharedResume() {
         {/* Summary */}
         {resume.summary && (
           <section>
-            <h2 className="text-sm md:text-base font-bold border-b border-foreground/30 pb-1 mb-2">PROFESSIONAL SUMMARY</h2>
-            <p className="whitespace-pre-line leading-relaxed">{resume.summary}</p>
+            <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">PROFESSIONAL SUMMARY</h2>
+            <p className="text-sm whitespace-pre-line leading-relaxed">{resume.summary}</p>
           </section>
         )}
 
         {/* Experience */}
         {resume.experience.length > 0 && (
           <section>
-            <h2 className="text-sm md:text-base font-bold border-b border-foreground/30 pb-1 mb-2">WORK EXPERIENCE</h2>
+            <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">WORK EXPERIENCE</h2>
             {resume.experience.map((exp) => (
-              <div key={exp.id} className="mb-4">
-                <div className="flex justify-between flex-wrap gap-2">
+              <div key={exp.id} className="mb-3">
+                <div className="flex justify-between flex-wrap gap-2 text-sm">
                   <span className="font-bold">{exp.position}</span>
                   <span className="text-muted-foreground">{exp.startDate} – {exp.endDate || 'Present'}</span>
                 </div>
-                <p className="text-muted-foreground italic">{exp.company}</p>
-                {exp.description && <p className="mt-1 whitespace-pre-line">• {exp.description}</p>}
+                <p className="text-sm text-muted-foreground">{exp.company}</p>
+                {exp.description && <p className="text-sm mt-1 whitespace-pre-line">• {exp.description}</p>}
                 {compactStringArray(exp.highlights).map((h, i) => (
-                  <p key={i}>• {h}</p>
+                  <p key={i} className="text-sm">• {h}</p>
                 ))}
               </div>
             ))}
@@ -199,26 +197,26 @@ export default function SharedResume() {
         {/* Education */}
         {resume.education.length > 0 && (
           <section>
-            <h2 className="text-sm md:text-base font-bold border-b border-foreground/30 pb-1 mb-2">EDUCATION</h2>
+            <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">EDUCATION</h2>
             {resume.education.map((edu) => (
               <div key={edu.id} className="mb-2">
-                <div className="flex justify-between flex-wrap gap-2">
+                <div className="flex justify-between flex-wrap gap-2 text-sm">
                   <span className="font-bold">{edu.field ? `${edu.degree} in ${edu.field}` : edu.degree}</span>
                   <span className="text-muted-foreground">
                     {edu.endDate && `${getEducationDateLabel(edu.dateType)}: ${edu.endDate}`}
                   </span>
                 </div>
-                <p className="text-muted-foreground italic">{edu.institution}</p>
+                <p className="text-sm text-muted-foreground">{edu.institution}</p>
               </div>
             ))}
           </section>
         )}
 
-        {/* Skills - horizontal */}
-        {pdfSkills.slice(3).length > 0 && (
+        {/* Skills */}
+        {remainingSkills.length > 0 && (
           <section>
-            <h2 className="text-sm md:text-base font-bold border-b border-foreground/30 pb-1 mb-2">SKILLS</h2>
-            <p>{pdfSkills.slice(3).join(' • ')}</p>
+            <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">SKILLS</h2>
+            <p className="text-sm">{remainingSkills.join('  •  ')}</p>
           </section>
         )}
 
@@ -228,23 +226,22 @@ export default function SharedResume() {
             <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">PROJECTS</h2>
             {resume.projects.map((proj) => (
               <div key={proj.id} className="mb-2">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <div className="flex flex-wrap items-center gap-x-2 text-sm">
                   <span className="font-bold">{proj.name || 'Project'}</span>
                   {proj.link && (
                     <a
                       href={normalizeUrl(proj.link)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline text-xs inline-flex items-center gap-1"
+                      className="text-primary hover:underline text-xs"
                     >
-                      <ExternalLink className="w-3 h-3" />
-                      {displayUrl(normalizeUrl(proj.link))}
+                      ({displayUrl(normalizeUrl(proj.link))})
                     </a>
                   )}
                 </div>
-                {proj.description && <p className="whitespace-pre-line">{proj.description}</p>}
+                {proj.description && <p className="text-sm whitespace-pre-line">{proj.description}</p>}
                 {compactStringArray(proj.technologies).length > 0 && (
-                  <p className="text-xs text-muted-foreground">Tech: {compactStringArray(proj.technologies).join(', ')}</p>
+                  <p className="text-xs text-muted-foreground">Technologies: {compactStringArray(proj.technologies).join(', ')}</p>
                 )}
               </div>
             ))}
@@ -255,13 +252,11 @@ export default function SharedResume() {
         {(resume.certifications || []).filter((c) => c.name).length > 0 && (
           <section>
             <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">CERTIFICATIONS</h2>
-            <ul className="list-disc list-inside">
+            <div className="space-y-0.5 text-sm">
               {resume.certifications.map((cert) => (
-                <li key={cert.id}>
-                  {cert.name} - {cert.issuer} ({cert.date})
-                </li>
+                <p key={cert.id}>• {cert.name} - {cert.issuer} ({cert.date})</p>
               ))}
-            </ul>
+            </div>
           </section>
         )}
 
@@ -269,11 +264,11 @@ export default function SharedResume() {
         {pdfAchievements.length > 0 && (
           <section>
             <h2 className="text-sm font-bold border-b border-foreground/30 pb-1 mb-2">ACHIEVEMENTS</h2>
-            <ul className="list-disc list-inside">
+            <div className="space-y-0.5 text-sm">
               {pdfAchievements.map((ach, i) => (
-                <li key={i}>{ach}</li>
+                <p key={i}>• {ach}</p>
               ))}
-            </ul>
+            </div>
           </section>
         )}
       </div>
