@@ -575,6 +575,61 @@ export default function Profile() {
 
           <TabsContent value="data" className="space-y-6">
             <div className="grid gap-6">
+              {/* Career Verdict Data */}
+              {careerVerdict && (
+                <Card className="glass-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Compass className="w-5 h-5 text-violet-500" />
+                      Career Verdict Data
+                    </CardTitle>
+                    <CardDescription>Your AI-generated career assessment</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-3 rounded-lg bg-secondary/50 text-center">
+                        <div className="text-2xl font-bold text-primary">{careerVerdict.hiringProbability}%</div>
+                        <div className="text-xs text-muted-foreground">Hiring Probability</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-secondary/50 text-center">
+                        <div className="text-2xl font-bold">{careerVerdict.resumeReadiness}%</div>
+                        <div className="text-xs text-muted-foreground">Resume Ready</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-secondary/50 text-center">
+                        <div className="text-2xl font-bold">{careerVerdict.skillReadiness}%</div>
+                        <div className="text-xs text-muted-foreground">Skills Ready</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-secondary/50 text-center">
+                        <div className="text-2xl font-bold">{careerVerdict.interviewReadiness}%</div>
+                        <div className="text-xs text-muted-foreground">Interview Ready</div>
+                      </div>
+                    </div>
+                    {careerVerdict.salaryRange && (
+                      <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <p className="text-sm text-muted-foreground mb-1">Expected Salary Range</p>
+                        <p className="text-xl font-bold text-emerald-600">
+                          ${careerVerdict.salaryRange.min?.toLocaleString()} — ${careerVerdict.salaryRange.max?.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    {careerVerdict.recommendedRoles && careerVerdict.recommendedRoles.length > 0 && (
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Recommended Roles</p>
+                        <div className="flex flex-wrap gap-2">
+                          {careerVerdict.recommendedRoles.map((role, i) => (
+                            <Badge key={i} className="bg-primary/10 text-primary">{role}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <Button variant="outline" className="w-full" onClick={() => navigate('/career-verdict')}>
+                      View Full Verdict
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Resume History */}
               <Card className="glass-card">
                 <CardHeader>
@@ -589,7 +644,7 @@ export default function Profile() {
                     <p className="text-center text-muted-foreground py-8">No resumes yet</p>
                   ) : (
                     <div className="space-y-3">
-                      {resumes.map((resume, index) => (
+                      {resumes.map((resume) => (
                         <div key={resume.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -598,7 +653,7 @@ export default function Profile() {
                             <div>
                               <p className="font-medium">{resume.name || `Resume v${resume.version}`}</p>
                               <p className="text-sm text-muted-foreground">
-                                {new Date(resume.updatedAt).toLocaleDateString()}
+                                {resume.skills?.length || 0} skills • {resume.experience?.length || 0} jobs • {new Date(resume.updatedAt).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -639,6 +694,78 @@ export default function Profile() {
                             <Badge variant="outline" className="text-emerald-500">{analysis.strengthAreas.length} strong</Badge>
                             <Badge variant="outline" className="text-destructive">{analysis.weaknesses.length} weak</Badge>
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Skill Gaps */}
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-orange-500" />
+                    Skill Gap Analyses
+                  </CardTitle>
+                  <CardDescription>Your skill assessments for target roles</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {skillGaps.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No skill gap analyses yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {skillGaps.map((gap, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                              <Target className="w-5 h-5 text-orange-500" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{gap.targetRole}</p>
+                              <p className="text-sm text-muted-foreground">{gap.experienceLevel} level</p>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className={gap.readinessScore >= 70 ? 'text-emerald-500' : gap.readinessScore >= 50 ? 'text-orange-500' : 'text-destructive'}>
+                            {gap.readinessScore}% ready
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Interview Attempts */}
+              <Card className="glass-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-pink-500" />
+                    Interview History
+                  </CardTitle>
+                  <CardDescription>Your mock interview sessions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {interviewAttempts.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No interviews yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {interviewAttempts.map((interview, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                              <MessageSquare className="w-5 h-5 text-pink-500" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{interview.role}</p>
+                              <p className="text-sm text-muted-foreground">{interview.experienceLevel} level</p>
+                            </div>
+                          </div>
+                          {interview.evaluation && (
+                            <Badge variant="outline">
+                              Score: {(interview.evaluation as any).overallScore || 'N/A'}
+                            </Badge>
+                          )}
                         </div>
                       ))}
                     </div>
