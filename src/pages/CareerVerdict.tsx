@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useResume } from '@/lib/ResumeContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { useResume, Resume } from '@/lib/ResumeContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Compass,
@@ -22,6 +24,7 @@ import {
   GraduationCap,
   Award,
   Zap,
+  FileText,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +32,7 @@ import { useNavigate } from 'react-router-dom';
 export default function CareerVerdict() {
   const navigate = useNavigate();
   const {
+    resumes,
     currentResume,
     analyses,
     skillGaps,
@@ -37,14 +41,26 @@ export default function CareerVerdict() {
     saveCareerVerdict,
   } = useResume();
   const [generating, setGenerating] = useState(false);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>(currentResume?.id || '');
+
+  const selectedResume = resumes.find((r) => r.id === selectedResumeId) || currentResume;
 
   const generateVerdict = async () => {
+    if (!selectedResume) {
+      toast({ 
+        title: 'Select a Resume', 
+        description: 'Please select a resume to analyze.', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     setGenerating(true);
     
     try {
       const { data, error } = await supabase.functions.invoke('career-verdict', {
         body: {
-          resume: currentResume,
+          resume: selectedResume,
           analyses: analyses.slice(0, 3),
           skillGaps: skillGaps.slice(0, 3),
           interviewAttempts: interviewAttempts.slice(0, 3),
@@ -135,6 +151,43 @@ export default function CareerVerdict() {
             {generating ? 'Analyzing...' : careerVerdict ? 'Refresh' : 'Generate Verdict'}
           </Button>
         </div>
+
+        {/* Resume Selector */}
+        <Card className="glass-card mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-sm text-muted-foreground">Select Resume for Analysis</Label>
+                  <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Choose a resume..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {resumes.length === 0 ? (
+                        <SelectItem value="none" disabled>No resumes available</SelectItem>
+                      ) : (
+                        resumes.map((resume) => (
+                          <SelectItem key={resume.id} value={resume.id}>
+                            {resume.name || `Resume v${resume.version}`} — {resume.skills?.length || 0} skills
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {resumes.length === 0 && (
+                <Button variant="outline" onClick={() => navigate('/resume-builder')}>
+                  Create Resume
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Data Status */}
         <div className="grid grid-cols-3 gap-4 mb-8">
