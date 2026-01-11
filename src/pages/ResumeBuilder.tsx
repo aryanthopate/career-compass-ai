@@ -183,29 +183,17 @@ export default function ResumeBuilder() {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 36;
+    const margin = 50;
     const contentWidth = pageWidth - margin * 2;
     let y = margin;
     const fontNormal = 'helvetica';
 
     const pdfSkills = compactStringArray(formData.skills);
     const pdfAchievements = compactStringArray(formData.achievements);
-    const topSkills = pdfSkills.slice(0, 3);
-    const remainingSkills = pdfSkills.slice(3);
-
-    // Dynamic sizing for single-page fit
-    const totalItems =
-      (formData.summary ? 1 : 0) +
-      (formData.experience?.length || 0) +
-      (formData.education?.length || 0) +
-      (formData.projects?.length || 0) +
-      (formData.certifications?.length || 0) +
-      (pdfAchievements.length > 0 ? 1 : 0) +
-      (pdfSkills.length > 0 ? 1 : 0);
-
-    // Adjust spacing based on content density
-    const lineHeight = totalItems > 12 ? 12 : totalItems > 8 ? 13 : 14;
-    const sectionGap = totalItems > 12 ? 6 : totalItems > 8 ? 8 : 10;
+    
+    // Fixed sizes matching template
+    const lineHeight = 14;
+    const sectionGap = 12;
 
     const checkPageBreak = (neededSpace: number = lineHeight * 2) => {
       if (y + neededSpace > pageHeight - margin) {
@@ -215,325 +203,242 @@ export default function ResumeBuilder() {
     };
 
     const addWrappedText = (text: string, x: number, maxWidth: number, lh: number) => {
-      const paragraphs = String(text || '').split(/\r?\n/);
-      paragraphs.forEach((p) => {
-        if (p === '') {
-          y += lh * 0.4;
-          return;
-        }
-        const lines = doc.splitTextToSize(p, maxWidth);
-        lines.forEach((line: string) => {
-          checkPageBreak(lh);
-          doc.text(line, x, y);
-          y += lh;
-        });
+      const lines = doc.splitTextToSize(String(text || ''), maxWidth);
+      lines.forEach((line: string) => {
+        checkPageBreak(lh);
+        doc.text(line, x, y);
+        y += lh;
       });
     };
 
-    // ===== HEADER =====
-    doc.setFont(fontNormal, 'bold');
-    doc.setFontSize(20);
-    doc.text(formData.name?.toUpperCase() || 'YOUR NAME', pageWidth / 2, y, { align: 'center' });
-    y += 22;
+    const addSectionTitle = (title: string) => {
+      checkPageBreak(lineHeight * 2);
+      doc.setFont(fontNormal, 'bold');
+      doc.setFontSize(14);
+      doc.text(title, margin, y);
+      y += 4;
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(0, 0, 0);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 12;
+    };
 
-    // Top Skills tagline (prominent)
-    if (topSkills.length > 0) {
+    // ===== NAME (Large, Bold, Centered) =====
+    doc.setFont(fontNormal, 'bold');
+    doc.setFontSize(24);
+    doc.text((formData.name || 'YOUR NAME').toUpperCase(), pageWidth / 2, y, { align: 'center' });
+    y += 24;
+
+    // ===== Skills Tagline (Bold, Centered, Pipe Separated) =====
+    const topSkillsTagline = pdfSkills.slice(0, 4);
+    if (topSkillsTagline.length > 0) {
       doc.setFont(fontNormal, 'bold');
       doc.setFontSize(11);
-      doc.setTextColor(80, 80, 80);
-      const tagline = topSkills.join('  •  ');
-      doc.text(tagline, pageWidth / 2, y, { align: 'center' });
+      doc.text(topSkillsTagline.join(' | '), pageWidth / 2, y, { align: 'center' });
+      y += 16;
+    }
+
+    // ===== Contact Info (Centered, Pipe Separated) =====
+    doc.setFont(fontNormal, 'normal');
+    doc.setFontSize(10);
+    const contactParts: string[] = [];
+    if (formData.location) contactParts.push(formData.location);
+    if (formData.email) contactParts.push(formData.email);
+    if (formData.phone) contactParts.push(formData.phone);
+    if (contactParts.length > 0) {
+      doc.text(contactParts.join(' | '), pageWidth / 2, y, { align: 'center' });
+      y += 14;
+    }
+
+    // ===== Portfolio Link (Centered) =====
+    const portfolioUrl = normalizeUrl(formData.portfolioLink);
+    if (portfolioUrl) {
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 200);
+      doc.textWithLink(displayUrl(portfolioUrl), pageWidth / 2, y, { url: portfolioUrl, align: 'center' } as any);
       doc.setTextColor(0, 0, 0);
       y += 14;
     }
 
-    // Contact info line with clickable links
-    doc.setFont(fontNormal, 'normal');
-    doc.setFontSize(10);
-    const contactItems: { text: string; url?: string }[] = [];
-    if (formData.location) contactItems.push({ text: formData.location });
-    if (formData.email) contactItems.push({ text: formData.email, url: `mailto:${formData.email}` });
-    if (formData.phone) contactItems.push({ text: formData.phone, url: `tel:${formData.phone.replace(/\s/g, '')}` });
-
-    if (contactItems.length > 0) {
-      const separator = '  |  ';
-      const parts = contactItems.map((item) => ({
-        text: item.text,
-        url: item.url,
-        width: doc.getTextWidth(item.text),
-      }));
-      const sepWidth = doc.getTextWidth(separator);
-      const totalWidth = parts.reduce((acc, p, i) => acc + p.width + (i > 0 ? sepWidth : 0), 0);
-      let currentX = (pageWidth - totalWidth) / 2;
-
-      parts.forEach((p, i) => {
-        if (i > 0) {
-          doc.setTextColor(100, 100, 100);
-          doc.text(separator, currentX, y);
-          currentX += sepWidth;
-        }
-        if (p.url) {
-          doc.setTextColor(0, 90, 180);
-          doc.textWithLink(p.text, currentX, y, { url: p.url });
-        } else {
-          doc.setTextColor(0, 0, 0);
-          doc.text(p.text, currentX, y);
-        }
-        currentX += p.width;
-      });
-      doc.setTextColor(0, 0, 0);
-      y += 13;
+    // ===== Additional Links (Centered) =====
+    const validLinks = (formData.links || [])
+      .map((l) => ({ label: (l.label || '').trim(), url: normalizeUrl(l.url) }))
+      .filter((l) => Boolean(l.url));
+    if (validLinks.length > 0) {
+      doc.setFontSize(10);
+      const linkTexts = validLinks.map((l) => l.label ? `${l.label}: ${displayUrl(l.url)}` : displayUrl(l.url));
+      doc.text(linkTexts.join(' | '), pageWidth / 2, y, { align: 'center' });
+      y += 14;
     }
 
-    // Portfolio Link
-    const portfolioUrl = normalizeUrl(formData.portfolioLink);
-    if (portfolioUrl) {
-      doc.setFontSize(9);
-      doc.setTextColor(0, 90, 180);
-      const portfolioDisplay = displayUrl(portfolioUrl);
-      const textWidth = doc.getTextWidth(portfolioDisplay);
-      doc.textWithLink(portfolioDisplay, (pageWidth - textWidth) / 2, y, { url: portfolioUrl });
-      doc.setTextColor(0, 0, 0);
-      y += 12;
-    }
-
-    // Additional Links
-    if (formData.links && formData.links.length > 0) {
-      const validLinks = formData.links
-        .map((l) => ({ label: (l.label || '').trim(), url: normalizeUrl(l.url) }))
-        .filter((l) => Boolean(l.url));
-
-      if (validLinks.length > 0) {
-        doc.setFontSize(9);
-        const separator = '  |  ';
-        const parts = validLinks.map((l) => {
-          const shown = displayUrl(l.url);
-          const text = l.label ? `${l.label}: ${shown}` : shown;
-          return { text, url: l.url, width: doc.getTextWidth(text) };
-        });
-
-        const separatorWidth = doc.getTextWidth(separator);
-        const totalWidth = parts.reduce((acc, p, i) => acc + p.width + (i > 0 ? separatorWidth : 0), 0);
-        let currentX = (pageWidth - totalWidth) / 2;
-
-        parts.forEach((p, i) => {
-          if (i > 0) {
-            doc.setTextColor(100, 100, 100);
-            doc.text(separator, currentX, y);
-            currentX += separatorWidth;
-          }
-          doc.setTextColor(0, 90, 180);
-          doc.textWithLink(p.text, currentX, y, { url: p.url });
-          currentX += p.width;
-        });
-        doc.setTextColor(0, 0, 0);
-        y += 12;
-      }
-    }
-
-    // Divider line
-    doc.setDrawColor(60, 60, 60);
-    doc.setLineWidth(0.6);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += sectionGap + 4;
+    y += 6;
 
     // ===== PROFESSIONAL SUMMARY =====
     if (formData.summary) {
-      doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(11);
-      doc.text('PROFESSIONAL SUMMARY', margin, y);
-      y += 3;
-      doc.setLineWidth(0.4);
-      doc.setDrawColor(0, 0, 0);
-      doc.line(margin, y, margin + 115, y);
-      y += 10;
+      addSectionTitle('PROFESSIONAL SUMMARY');
       doc.setFont(fontNormal, 'normal');
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       addWrappedText(formData.summary, margin, contentWidth, lineHeight);
       y += sectionGap;
     }
 
     // ===== WORK EXPERIENCE =====
     if (formData.experience && formData.experience.length > 0) {
-      checkPageBreak(lineHeight * 3);
-      doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(11);
-      doc.text('WORK EXPERIENCE', margin, y);
-      y += 3;
-      doc.setLineWidth(0.4);
-      doc.line(margin, y, margin + 100, y);
-      y += 10;
-
-      formData.experience.forEach((exp, idx) => {
+      addSectionTitle('WORK EXPERIENCE');
+      
+      formData.experience.forEach((exp) => {
         checkPageBreak(lineHeight * 3);
+        
+        // Position (Bold)
         doc.setFont(fontNormal, 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         doc.text(exp.position || 'Position', margin, y);
+        
+        // Date (Right aligned)
         const dateText = `${exp.startDate || ''} – ${exp.endDate || 'Present'}`;
         doc.setFont(fontNormal, 'normal');
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.text(dateText, pageWidth - margin, y, { align: 'right' });
         y += lineHeight;
+        
+        // Company
+        doc.setFont(fontNormal, 'normal');
         doc.setFontSize(10);
         doc.text(exp.company || '', margin, y);
-        y += lineHeight;
+        y += lineHeight + 2;
         
+        // Description as bullet
         if (exp.description) {
-          doc.setFontSize(9);
-          addWrappedText(`• ${exp.description}`, margin + 6, contentWidth - 6, lineHeight - 1);
+          doc.setFontSize(10);
+          addWrappedText(`• ${exp.description}`, margin, contentWidth, lineHeight);
         }
+        
+        // Highlights as bullets
         exp.highlights?.forEach((h) => {
           if (h) {
-            doc.setFontSize(9);
-            addWrappedText(`• ${h}`, margin + 6, contentWidth - 6, lineHeight - 1);
+            doc.setFontSize(10);
+            addWrappedText(`• ${h}`, margin, contentWidth, lineHeight);
           }
         });
-        if (idx < formData.experience!.length - 1) y += 3;
+        y += 4;
       });
-      y += sectionGap;
+      y += sectionGap - 4;
     }
 
     // ===== EDUCATION =====
     if (formData.education && formData.education.length > 0) {
-      checkPageBreak(lineHeight * 2);
-      doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(11);
-      doc.text('EDUCATION', margin, y);
-      y += 3;
-      doc.setLineWidth(0.4);
-      doc.line(margin, y, margin + 60, y);
-      y += 10;
-
+      addSectionTitle('EDUCATION');
+      
       formData.education.forEach((edu) => {
         checkPageBreak(lineHeight * 2);
+        
+        // Degree (Bold)
         doc.setFont(fontNormal, 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         const degreeText = edu.field ? `${edu.degree} in ${edu.field}` : edu.degree;
-        doc.text(degreeText, margin, y);
-        doc.setFont(fontNormal, 'normal');
-        doc.setFontSize(9);
+        doc.text(degreeText || '', margin, y);
+        
+        // Date (Right aligned)
         const dateLabel = getEducationDateLabel(edu.dateType);
         const dateText = edu.endDate ? `${dateLabel}: ${edu.endDate}` : '';
+        doc.setFont(fontNormal, 'normal');
+        doc.setFontSize(10);
         doc.text(dateText, pageWidth - margin, y, { align: 'right' });
         y += lineHeight;
+        
+        // Institution
         doc.setFontSize(10);
         doc.text(edu.institution || '', margin, y);
-        y += lineHeight + 2;
+        y += lineHeight + 6;
       });
-      y += sectionGap - 2;
+      y += sectionGap - 6;
     }
 
-    // ===== SKILLS (Horizontal - ALL skills) =====
+    // ===== SKILLS (Bullet points with multiple skills per line) =====
     if (pdfSkills.length > 0) {
-      checkPageBreak(lineHeight * 2);
-      doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(11);
-      doc.text('SKILLS', margin, y);
-      y += 3;
-      doc.setLineWidth(0.4);
-      doc.line(margin, y, margin + 40, y);
-      y += 10;
+      addSectionTitle('SKILLS');
       doc.setFont(fontNormal, 'normal');
-      doc.setFontSize(10);
-      // All skills horizontal with pipe separators for ATS
-      const skillsText = pdfSkills.join('  |  ');
-      const skillLines = doc.splitTextToSize(skillsText, contentWidth);
-      skillLines.forEach((line: string) => {
+      doc.setFontSize(11);
+      
+      // Group skills into lines of 5-6 skills each, separated by pipes
+      const skillsPerLine = 6;
+      for (let i = 0; i < pdfSkills.length; i += skillsPerLine) {
+        const lineSkills = pdfSkills.slice(i, i + skillsPerLine);
         checkPageBreak(lineHeight);
-        doc.text(line, margin, y);
+        doc.text(`• ${lineSkills.join(' | ')}`, margin, y);
         y += lineHeight;
-      });
+      }
       y += sectionGap;
     }
 
     // ===== PROJECTS =====
     if (formData.projects && formData.projects.length > 0) {
-      checkPageBreak(lineHeight * 2);
-      doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(11);
-      doc.text('PROJECTS', margin, y);
-      y += 3;
-      doc.setLineWidth(0.4);
-      doc.line(margin, y, margin + 55, y);
-      y += 10;
-
+      addSectionTitle('PROJECTS');
+      
       formData.projects.forEach((proj) => {
-        checkPageBreak(lineHeight * 2);
-        const projectName = proj.name || 'Project';
-        const projectUrl = normalizeUrl(proj.link || '');
+        checkPageBreak(lineHeight * 3);
         
+        // Project Name (Bold)
         doc.setFont(fontNormal, 'bold');
-        doc.setFontSize(10);
-        doc.text(projectName, margin, y);
+        doc.setFontSize(11);
+        doc.text(proj.name || 'Project', margin, y);
         
-        // Project link on same line after name
+        // Project Link (same line)
+        const projectUrl = normalizeUrl(proj.link || '');
         if (projectUrl) {
-          const nameWidth = doc.getTextWidth(projectName);
+          const nameWidth = doc.getTextWidth(proj.name || 'Project');
           doc.setFont(fontNormal, 'normal');
-          doc.setFontSize(9);
-          doc.setTextColor(0, 90, 180);
-          doc.textWithLink(displayUrl(projectUrl), margin + nameWidth + 6, y, { url: projectUrl });
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 200);
+          doc.textWithLink(displayUrl(projectUrl), margin + nameWidth + 10, y, { url: projectUrl });
           doc.setTextColor(0, 0, 0);
         }
         y += lineHeight;
-
-        // Technologies on next line (horizontal, comma-separated)
+        
+        // Technologies
         const tech = compactStringArray(proj.technologies);
         if (tech.length > 0) {
           doc.setFont(fontNormal, 'italic');
-          doc.setFontSize(9);
-          doc.setTextColor(60, 60, 60);
+          doc.setFontSize(10);
           doc.text(`Tech: ${tech.join(', ')}`, margin, y);
-          doc.setTextColor(0, 0, 0);
-          y += lineHeight - 1;
+          y += lineHeight;
         }
-
+        
         // Description
         if (proj.description) {
           doc.setFont(fontNormal, 'normal');
-          doc.setFontSize(9);
-          addWrappedText(proj.description, margin, contentWidth, lineHeight - 1);
+          doc.setFontSize(10);
+          addWrappedText(proj.description, margin, contentWidth, lineHeight);
         }
-        y += 3;
+        y += 6;
+      });
+      y += sectionGap - 6;
+    }
+
+    // ===== CERTIFICATIONS =====
+    const validCerts = (formData.certifications || []).filter((cert) => cert.name || cert.issuer);
+    if (validCerts.length > 0) {
+      addSectionTitle('CERTIFICATIONS');
+      doc.setFont(fontNormal, 'normal');
+      doc.setFontSize(11);
+      validCerts.forEach((cert) => {
+        checkPageBreak(lineHeight);
+        const certText = [cert.name, cert.issuer, cert.date ? `(${cert.date})` : ''].filter(Boolean).join(' - ');
+        doc.text(`• ${certText}`, margin, y);
+        y += lineHeight;
       });
       y += sectionGap;
     }
 
-    // ===== CERTIFICATIONS =====
-    if (formData.certifications && formData.certifications.length > 0) {
-      const validCerts = formData.certifications.filter((cert) => cert.name || cert.issuer || cert.date);
-      if (validCerts.length > 0) {
-        checkPageBreak(lineHeight * 2);
-        doc.setFont(fontNormal, 'bold');
-        doc.setFontSize(11);
-        doc.text('CERTIFICATIONS', margin, y);
-        y += 3;
-        doc.setLineWidth(0.4);
-        doc.line(margin, y, margin + 85, y);
-        y += 10;
-        doc.setFont(fontNormal, 'normal');
-        doc.setFontSize(10);
-        validCerts.forEach((cert) => {
-          addWrappedText(`• ${cert.name} - ${cert.issuer} (${cert.date})`, margin, contentWidth, lineHeight);
-        });
-        y += sectionGap;
-      }
-    }
-
     // ===== ACHIEVEMENTS =====
     if (pdfAchievements.length > 0) {
-      checkPageBreak(lineHeight * 2);
-      doc.setFont(fontNormal, 'bold');
-      doc.setFontSize(11);
-      doc.text('ACHIEVEMENTS', margin, y);
-      y += 3;
-      doc.setLineWidth(0.4);
-      doc.line(margin, y, margin + 80, y);
-      y += 10;
+      addSectionTitle('ACHIEVEMENTS');
       doc.setFont(fontNormal, 'normal');
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       pdfAchievements.forEach((ach) => {
-        addWrappedText(`• ${ach}`, margin, contentWidth, lineHeight);
+        checkPageBreak(lineHeight);
+        doc.text(`• ${ach}`, margin, y);
+        y += lineHeight;
       });
     }
 
