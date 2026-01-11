@@ -423,8 +423,8 @@ export default function ResumeBuilder() {
       y += sectionGap - 2;
     }
 
-    // ===== SKILLS (Horizontal) =====
-    if (remainingSkills.length > 0) {
+    // ===== SKILLS (Horizontal - ALL skills) =====
+    if (pdfSkills.length > 0) {
       checkPageBreak(lineHeight * 2);
       doc.setFont(fontNormal, 'bold');
       doc.setFontSize(11);
@@ -435,8 +435,14 @@ export default function ResumeBuilder() {
       y += 10;
       doc.setFont(fontNormal, 'normal');
       doc.setFontSize(10);
-      const skillsText = remainingSkills.join('  •  ');
-      addWrappedText(skillsText, margin, contentWidth, lineHeight);
+      // All skills horizontal with pipe separators for ATS
+      const skillsText = pdfSkills.join('  |  ');
+      const skillLines = doc.splitTextToSize(skillsText, contentWidth);
+      skillLines.forEach((line: string) => {
+        checkPageBreak(lineHeight);
+        doc.text(line, margin, y);
+        y += lineHeight;
+      });
       y += sectionGap;
     }
 
@@ -454,37 +460,41 @@ export default function ResumeBuilder() {
       formData.projects.forEach((proj) => {
         checkPageBreak(lineHeight * 2);
         const projectName = proj.name || 'Project';
+        const projectUrl = normalizeUrl(proj.link || '');
+        
         doc.setFont(fontNormal, 'bold');
         doc.setFontSize(10);
+        doc.text(projectName, margin, y);
         
-        const projectUrl = normalizeUrl(proj.link || '');
+        // Project link on same line after name
         if (projectUrl) {
           const nameWidth = doc.getTextWidth(projectName);
-          doc.text(projectName, margin, y);
           doc.setFont(fontNormal, 'normal');
           doc.setFontSize(9);
           doc.setTextColor(0, 90, 180);
-          const linkText = `(${displayUrl(projectUrl)})`;
-          doc.textWithLink(linkText, margin + nameWidth + 4, y, { url: projectUrl });
+          doc.textWithLink(displayUrl(projectUrl), margin + nameWidth + 6, y, { url: projectUrl });
           doc.setTextColor(0, 0, 0);
-        } else {
-          doc.text(projectName, margin, y);
         }
         y += lineHeight;
 
-        doc.setFont(fontNormal, 'normal');
-        doc.setFontSize(9);
-        if (proj.description) {
-          addWrappedText(proj.description, margin, contentWidth, lineHeight - 1);
-        }
+        // Technologies on next line (horizontal, comma-separated)
         const tech = compactStringArray(proj.technologies);
         if (tech.length > 0) {
+          doc.setFont(fontNormal, 'italic');
           doc.setFontSize(9);
-          doc.setTextColor(80, 80, 80);
-          addWrappedText(`Technologies: ${tech.join(', ')}`, margin, contentWidth, lineHeight - 1);
+          doc.setTextColor(60, 60, 60);
+          doc.text(`Tech: ${tech.join(', ')}`, margin, y);
           doc.setTextColor(0, 0, 0);
+          y += lineHeight - 1;
         }
-        y += 2;
+
+        // Description
+        if (proj.description) {
+          doc.setFont(fontNormal, 'normal');
+          doc.setFontSize(9);
+          addWrappedText(proj.description, margin, contentWidth, lineHeight - 1);
+        }
+        y += 3;
       });
       y += sectionGap;
     }
