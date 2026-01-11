@@ -66,8 +66,8 @@ export default function ResumeBuilder() {
   const [showPreview, setShowPreview] = useState(false);
   const [generatingShareLink, setGeneratingShareLink] = useState(false);
 
-  const [formData, setFormData] = useState<Partial<Resume>>(
-    currentResume || {
+  const [formData, setFormData] = useState<Partial<Resume> & { taglineSkills?: string }>(
+    currentResume ? { ...currentResume, taglineSkills: (currentResume as any).taglineSkills || '' } : {
       name: '',
       email: '',
       phone: '',
@@ -81,6 +81,7 @@ export default function ResumeBuilder() {
       skills: [],
       achievements: [],
       certifications: [],
+      taglineSkills: '',
     }
   );
 
@@ -150,7 +151,7 @@ export default function ResumeBuilder() {
       toast({ title: 'Resume Deleted', description: 'Resume has been permanently deleted.' });
       refreshData();
       if (currentResume?.id === resumeId) {
-        setFormData({ name: '', email: '', phone: '', location: '', portfolioLink: '', links: [], summary: '', education: [], experience: [], projects: [], skills: [], achievements: [], certifications: [] });
+        setFormData({ name: '', email: '', phone: '', location: '', portfolioLink: '', links: [], summary: '', education: [], experience: [], projects: [], skills: [], achievements: [], certifications: [], taglineSkills: '' });
       }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to delete resume.', variant: 'destructive' });
@@ -229,34 +230,39 @@ export default function ResumeBuilder() {
     doc.text((formData.name || 'YOUR NAME').toUpperCase(), pageWidth / 2, y, { align: 'center' });
     y += 24;
 
-    // ===== Skills Tagline (Bold, Centered, Pipe Separated) =====
-    const topSkillsTagline = pdfSkills.slice(0, 4);
-    if (topSkillsTagline.length > 0) {
+    // ===== Tagline Skills (Bold, Centered, Pipe Separated) - uses separate taglineSkills field =====
+    const taglineSkillsText = ((formData as any).taglineSkills || '').trim();
+    if (taglineSkillsText) {
       doc.setFont(fontNormal, 'bold');
       doc.setFontSize(11);
-      doc.text(topSkillsTagline.join(' | '), pageWidth / 2, y, { align: 'center' });
+      doc.text(taglineSkillsText, pageWidth / 2, y, { align: 'center' });
       y += 16;
     }
 
-    // ===== Contact Info (Centered, Pipe Separated) =====
+    // ===== Contact Info (Centered, Pipe Separated) - includes portfolio =====
     doc.setFont(fontNormal, 'normal');
     doc.setFontSize(10);
     const contactParts: string[] = [];
     if (formData.location) contactParts.push(formData.location);
     if (formData.email) contactParts.push(formData.email);
     if (formData.phone) contactParts.push(formData.phone);
-    if (contactParts.length > 0) {
-      doc.text(contactParts.join(' | '), pageWidth / 2, y, { align: 'center' });
-      y += 14;
-    }
-
-    // ===== Portfolio Link (Centered) =====
     const portfolioUrl = normalizeUrl(formData.portfolioLink);
-    if (portfolioUrl) {
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 200);
-      doc.textWithLink(displayUrl(portfolioUrl), pageWidth / 2, y, { url: portfolioUrl, align: 'center' } as any);
-      doc.setTextColor(0, 0, 0);
+    if (portfolioUrl) contactParts.push(displayUrl(portfolioUrl));
+    if (contactParts.length > 0) {
+      // Build contact line with clickable portfolio
+      const beforePortfolio = contactParts.slice(0, portfolioUrl ? -1 : contactParts.length).join(' | ');
+      if (portfolioUrl) {
+        const beforeText = beforePortfolio ? `${beforePortfolio} | ` : '';
+        const beforeWidth = doc.getTextWidth(beforeText);
+        const totalWidth = doc.getTextWidth(beforeText + displayUrl(portfolioUrl));
+        const startX = (pageWidth - totalWidth) / 2;
+        doc.text(beforeText, startX, y);
+        doc.setTextColor(0, 0, 200);
+        doc.textWithLink(displayUrl(portfolioUrl), startX + beforeWidth, y, { url: portfolioUrl });
+        doc.setTextColor(0, 0, 0);
+      } else {
+        doc.text(beforePortfolio, pageWidth / 2, y, { align: 'center' });
+      }
       y += 14;
     }
 
@@ -557,7 +563,7 @@ export default function ResumeBuilder() {
   };
 
   const loadResume = (resume: Resume) => {
-    setFormData(resume);
+    setFormData({ ...resume, taglineSkills: (resume as any).taglineSkills || '' });
     setCurrentResume(resume);
     toast({ title: 'Resume Loaded', description: `Loaded version ${resume.version}` });
   };
@@ -871,6 +877,19 @@ export default function ResumeBuilder() {
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Code className="w-5 h-5 text-primary" /></div>
                       <div><h2 className="text-lg font-semibold">Skills</h2><p className="text-sm text-muted-foreground">Technical and professional skills</p></div>
                     </div>
+                    
+                    {/* Tagline Skills - appears under name */}
+                    <div className="p-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
+                      <Label className="text-primary font-medium">Tagline Skills (Header)</Label>
+                      <Input 
+                        value={(formData as any).taglineSkills || ''} 
+                        onChange={(e) => updateField('taglineSkills' as keyof Resume, e.target.value)} 
+                        placeholder="Full Stack Developer | React Expert | Cloud Architect" 
+                        className="mt-2" 
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Appears right under your name (pipe-separated). These are NOT added to the Skills section below.</p>
+                    </div>
+
                     <div className="space-y-2">
                       <Label>Skills (one per line or comma-separated)</Label>
                       <Textarea value={formData.skills?.join('\n') || ''} onChange={(e) => updateField('skills', e.target.value.split(/[\n,]/))} placeholder="Digital Marketing Strategy&#10;SEO & SEM, Google Analytics&#10;Social Media Marketing&#10;Content Creation & Copywriting" rows={6} />
@@ -998,9 +1017,9 @@ export default function ResumeBuilder() {
                     {/* Header */}
                     <div className="text-center border-b border-border pb-3">
                       <h1 className="text-xl font-bold tracking-wide uppercase">{formData.name || 'YOUR NAME'}</h1>
-                      {compactStringArray(formData.skills).length >= 3 && (
+                      {((formData as any).taglineSkills || '').trim() && (
                         <p className="text-xs font-semibold text-muted-foreground mt-1">
-                          {compactStringArray(formData.skills).slice(0, 3).join('  •  ')}
+                          {(formData as any).taglineSkills}
                         </p>
                       )}
 
@@ -1014,19 +1033,19 @@ export default function ResumeBuilder() {
                         {formData.phone && (
                           <a href={`tel:${formData.phone.replace(/\s/g, '')}`} className="text-primary hover:underline">{formData.phone}</a>
                         )}
+                        {(() => {
+                          const portfolioUrl = normalizeUrl(formData.portfolioLink);
+                          if (!portfolioUrl) return null;
+                          return (
+                            <>
+                              <span className="mx-1">|</span>
+                              <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                {displayUrl(portfolioUrl)}
+                              </a>
+                            </>
+                          );
+                        })()}
                       </p>
-
-                      {(() => {
-                        const portfolioUrl = normalizeUrl(formData.portfolioLink);
-                        if (!portfolioUrl) return null;
-                        return (
-                          <p className="text-xs mt-1">
-                            <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                              {displayUrl(portfolioUrl)}
-                            </a>
-                          </p>
-                        );
-                      })()}
 
                       {(() => {
                         const links = (formData.links || [])
@@ -1095,10 +1114,10 @@ export default function ResumeBuilder() {
                     )}
 
                     {/* Skills */}
-                    {compactStringArray(formData.skills).slice(3).length > 0 && (
+                    {compactStringArray(formData.skills).length > 0 && (
                       <div>
                         <h2 className="text-xs font-bold border-b border-foreground/30 pb-1 mb-2">SKILLS</h2>
-                        <p className="text-xs">{compactStringArray(formData.skills).slice(3).join('  •  ')}</p>
+                        <p className="text-xs">{compactStringArray(formData.skills).join('  •  ')}</p>
                       </div>
                     )}
 
