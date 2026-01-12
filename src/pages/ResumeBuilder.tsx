@@ -905,29 +905,137 @@ export default function ResumeBuilder() {
                   <div className="space-y-6 animate-fade-in">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Folder className="w-5 h-5 text-primary" /></div>
-                        <div><h2 className="text-lg font-semibold">Projects</h2><p className="text-sm text-muted-foreground">Showcase your work</p></div>
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center border border-violet-500/30 shadow-lg shadow-violet-500/10">
+                          <Folder className="w-6 h-6 text-violet-500" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-bold bg-gradient-to-r from-violet-500 to-purple-500 bg-clip-text text-transparent">Projects</h2>
+                          <p className="text-sm text-muted-foreground">Showcase your best work with live links</p>
+                        </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={addProject}><Plus className="w-4 h-4 mr-2" />Add</Button>
+                      <Button onClick={addProject} className="gap-2 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-500/25">
+                        <Plus className="w-4 h-4" />Add Project
+                      </Button>
                     </div>
+                    
                     {formData.projects?.length === 0 && (
-                      <div className="text-center py-12 border-2 border-dashed border-border rounded-xl">
-                        <Folder className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
-                        <p className="text-muted-foreground">No projects added yet</p>
-                        <Button variant="outline" size="sm" className="mt-3" onClick={addProject}><Plus className="w-4 h-4 mr-2" />Add Project</Button>
+                      <div className="text-center py-16 border-2 border-dashed border-violet-500/30 rounded-2xl bg-gradient-to-br from-violet-500/5 to-purple-500/5">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-violet-500/10 flex items-center justify-center mb-4">
+                          <Folder className="w-8 h-8 text-violet-500/50" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
+                        <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">Add your best projects to showcase your skills and experience to recruiters</p>
+                        <Button onClick={addProject} className="gap-2 bg-gradient-to-r from-violet-500 to-purple-500">
+                          <Plus className="w-4 h-4" />Add Your First Project
+                        </Button>
                       </div>
                     )}
-                    {formData.projects?.map((proj, index) => (
-                      <div key={proj.id} className="p-5 rounded-xl border border-border bg-secondary/20 space-y-4">
-                        <div className="flex items-center justify-between"><Badge variant="outline">Project {index + 1}</Badge><Button variant="ghost" size="sm" onClick={() => removeProject(proj.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button></div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                          <div className="space-y-2"><Label>Project Name</Label><Input value={proj.name} onChange={(e) => updateProject(proj.id, 'name', e.target.value)} placeholder="E-commerce Platform" /></div>
-                          <div className="space-y-2"><Label>Project Link</Label><Input value={proj.link || ''} onChange={(e) => updateProject(proj.id, 'link', e.target.value)} placeholder="https://github.com/..." /></div>
+                    
+                    <div className="space-y-4">
+                      {formData.projects?.map((proj, index) => (
+                        <div key={proj.id} className="group relative p-6 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-card via-card to-violet-500/5 hover:border-violet-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-violet-500/10">
+                          {/* Project Number Badge */}
+                          <div className="absolute -top-3 -left-3 w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                            {index + 1}
+                          </div>
+                          
+                          {/* Delete Button */}
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => removeProject(proj.id)} 
+                            className="absolute top-3 right-3 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                          
+                          <div className="space-y-5 pt-2">
+                            {/* Project Name & Link Row */}
+                            <div className="grid sm:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+                                  Project Name
+                                </Label>
+                                <Input 
+                                  value={proj.name} 
+                                  onChange={(e) => updateProject(proj.id, 'name', e.target.value)} 
+                                  placeholder="E-commerce Platform" 
+                                  className="bg-background/50 border-violet-500/20 focus:border-violet-500/50 focus:ring-violet-500/20"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium flex items-center gap-2">
+                                  <ExternalLink className="w-3.5 h-3.5 text-violet-500" />
+                                  Live/GitHub Link
+                                </Label>
+                                <div className="relative">
+                                  <Input 
+                                    value={proj.link || ''} 
+                                    onChange={(e) => updateProject(proj.id, 'link', e.target.value)} 
+                                    placeholder="https://github.com/your-project" 
+                                    className="bg-background/50 border-violet-500/20 focus:border-violet-500/50 pr-10"
+                                  />
+                                  {proj.link && (
+                                    <a 
+                                      href={normalizeUrl(proj.link)} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-violet-500/10 text-violet-500 transition-colors"
+                                    >
+                                      <ExternalLink className="w-4 h-4" />
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Description */}
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                Description
+                              </Label>
+                              <Textarea 
+                                value={proj.description} 
+                                onChange={(e) => updateProject(proj.id, 'description', e.target.value)} 
+                                placeholder="Built a full-stack e-commerce platform with real-time inventory management, secure payment processing, and an admin dashboard. Implemented CI/CD pipeline for automated deployments." 
+                                rows={3} 
+                                className="bg-background/50 border-violet-500/20 focus:border-violet-500/50 resize-none"
+                              />
+                            </div>
+                            
+                            {/* Technologies */}
+                            <div className="space-y-3">
+                              <Label className="text-sm font-medium flex items-center gap-2">
+                                <Code className="w-3.5 h-3.5 text-purple-500" />
+                                Tech Stack
+                              </Label>
+                              <Input 
+                                value={proj.technologies?.join(', ') || ''} 
+                                onChange={(e) => updateProject(proj.id, 'technologies', e.target.value.split(',').map(t => t.trim()))} 
+                                placeholder="React, Node.js, PostgreSQL, Docker, AWS" 
+                                className="bg-background/50 border-violet-500/20 focus:border-violet-500/50"
+                              />
+                              
+                              {/* Tech Stack Preview */}
+                              {compactStringArray(proj.technologies).length > 0 && (
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                  {compactStringArray(proj.technologies).map((tech, i) => (
+                                    <span 
+                                      key={i} 
+                                      className="px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20"
+                                    >
+                                      {tech}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-2"><Label>Description</Label><Textarea value={proj.description} onChange={(e) => updateProject(proj.id, 'description', e.target.value)} placeholder="Describe the project, your role, and key achievements..." rows={3} /></div>
-                        <div className="space-y-2"><Label>Technologies (comma-separated)</Label><Input value={proj.technologies?.join(', ') || ''} onChange={(e) => updateProject(proj.id, 'technologies', e.target.value.split(',').map(t => t.trim()))} placeholder="React, Node.js, PostgreSQL" /></div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
 

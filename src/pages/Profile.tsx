@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
 import { useResume } from '@/lib/ResumeContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +47,13 @@ import {
   Trophy,
   Flame,
   Star,
+  Sparkles,
+  Shield,
+  Activity,
+  Award,
+  Cpu,
+  Database,
+  Terminal,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -255,148 +263,211 @@ export default function Profile() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="w-20 h-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+          <Cpu className="w-8 h-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary animate-pulse" />
+        </div>
       </div>
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* High-tech background grid */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="absolute top-1/4 -right-32 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-1/4 -left-32 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
+      </div>
+      
       <Header />
       
-      <main className="container py-8 max-w-6xl">
-        {/* Profile Header */}
-        <div className="relative mb-8">
-          {/* Cover Banner */}
-          <div className="relative h-32 sm:h-44 md:h-56 rounded-2xl overflow-hidden group">
-            {bannerUrl ? (
-              <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-r from-primary via-primary/80 to-accent">
-                <div className="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLThoLTJ2LTRoMnY0em0tOCAwaC0ydi00aDJ2NHptLTggMGgtMnYtNGgydjR6bTggMTZoLTJ2LTRoMnY0em0tOCAwaC0ydi00aDJ2NHptLTggMGgtMnYtNGgydjR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
-              </div>
-            )}
-            {/* Banner Edit Controls */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 sm:gap-3">
-              <input
-                ref={bannerInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleBannerChange}
-                className="hidden"
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => bannerInputRef.current?.click()}
-                className="gap-1 sm:gap-2 text-xs sm:text-sm"
-              >
-                <Image className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Change Banner</span>
-                <span className="sm:hidden">Change</span>
-              </Button>
-              {bannerUrl && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={removeBanner}
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm"
-                >
-                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Remove</span>
-                </Button>
+      <main className="container py-8 max-w-6xl relative z-10">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Profile Header - Futuristic Design */}
+          <motion.div variants={itemVariants} className="relative mb-8">
+            {/* Cover Banner with Cyber Effect */}
+            <div className="relative h-36 sm:h-48 md:h-60 rounded-3xl overflow-hidden group">
+              {bannerUrl ? (
+                <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary via-primary/80 to-accent relative">
+                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLThoLTJ2LTRoMnY0em0tOCAwaC0ydi00aDJ2NHptLTggMGgtMnYtNGgydjR6bTggMTZoLTJ2LTRoMnY0em0tOCAwaC0ydi00aDJ2NHptLTggMGgtMnYtNGgydjR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+                  {/* Animated scan line */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-scan" />
+                  </div>
+                  {/* Corner decorations */}
+                  <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-white/30" />
+                  <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-white/30" />
+                  <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-white/30" />
+                  <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-white/30" />
+                </div>
               )}
-            </div>
-          </div>
-          
-          {/* Avatar & Profile Info */}
-          <div className="absolute -bottom-12 sm:-bottom-16 left-4 sm:left-8 flex items-end gap-3 sm:gap-6">
-            <div className="relative">
-              <div className="w-20 h-20 sm:w-28 md:w-32 sm:h-28 md:h-32 rounded-2xl bg-card border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
-                {formData.avatar_url ? (
-                  <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
-                    {getInitials(formData.full_name, profile?.email)}
-                  </span>
+              
+              {/* Banner Edit Controls */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
+                <input ref={bannerInputRef} type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
+                <Button variant="secondary" size="sm" onClick={() => bannerInputRef.current?.click()} className="gap-2 bg-white/10 border-white/20 backdrop-blur-md hover:bg-white/20">
+                  <Image className="w-4 h-4" />
+                  <span className="hidden sm:inline">Change Banner</span>
+                </Button>
+                {bannerUrl && (
+                  <Button variant="destructive" size="sm" onClick={removeBanner} className="gap-2">
+                    <X className="w-4 h-4" />
+                    <span className="hidden sm:inline">Remove</span>
+                  </Button>
                 )}
               </div>
-              <button 
-                onClick={() => setEditDialogOpen(true)}
-                className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
-              >
-                <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
             </div>
             
-            <div className="pb-2 sm:pb-4 hidden sm:block">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
-                {formData.full_name || 'Set your name'}
-              </h1>
-              <p className="text-muted-foreground flex items-center gap-2 mt-1 text-sm">
-                <Mail className="w-4 h-4" />
-                {profile?.email || user?.email}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
-              </p>
+            {/* Avatar & Profile Info - Enhanced */}
+            <div className="absolute -bottom-14 sm:-bottom-16 left-4 sm:left-8 flex items-end gap-4 sm:gap-6">
+              <motion.div 
+                className="relative"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                {/* Glowing ring effect */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-2xl blur opacity-50 group-hover:opacity-75 transition" />
+                <div className="relative w-24 h-24 sm:w-32 md:w-36 sm:h-32 md:h-36 rounded-2xl bg-card border-4 border-background shadow-2xl flex items-center justify-center overflow-hidden">
+                  {formData.avatar_url ? (
+                    <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent">
+                      {getInitials(formData.full_name, profile?.email)}
+                    </span>
+                  )}
+                </div>
+                <button 
+                  onClick={() => setEditDialogOpen(true)}
+                  className="absolute -bottom-2 -right-2 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center shadow-lg hover:shadow-primary/50 transition-all hover:scale-110"
+                >
+                  <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
+              </motion.div>
+              
+              <div className="pb-3 sm:pb-5 hidden sm:block">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    {formData.full_name || 'Set your name'}
+                  </h1>
+                  <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0">
+                    <Shield className="w-3 h-3 mr-1" />
+                    Verified
+                  </Badge>
+                </div>
+                <p className="text-muted-foreground flex items-center gap-2 mt-2 text-sm">
+                  <Mail className="w-4 h-4" />
+                  {profile?.email || user?.email}
+                </p>
+                <div className="flex items-center gap-4 mt-2">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Joined {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}
+                  </span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Activity className="w-3 h-3 text-green-500" />
+                    Active Now
+                  </span>
+                </div>
+              </div>
             </div>
+            
+            {/* Edit Profile Button */}
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+              <Button 
+                onClick={() => setEditDialogOpen(true)}
+                className="gap-2 shadow-lg bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20 text-white"
+                size="sm"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span className="hidden sm:inline">Edit Profile</span>
+              </Button>
+            </div>
+          </motion.div>
+          
+          {/* Mobile Profile Info */}
+          <div className="sm:hidden mt-18 mb-4 px-2">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold">{formData.full_name || 'Set your name'}</h1>
+              <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 text-xs">
+                <Shield className="w-2.5 h-2.5 mr-0.5" />
+                Verified
+              </Badge>
+            </div>
+            <p className="text-muted-foreground flex items-center gap-2 mt-1 text-sm">
+              <Mail className="w-4 h-4" />
+              {profile?.email || user?.email}
+            </p>
           </div>
           
-          {/* Edit Profile Button */}
-          <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
-            <Button 
-              onClick={() => setEditDialogOpen(true)}
-              className="gap-1 sm:gap-2 shadow-lg text-xs sm:text-sm"
-              size="sm"
-            >
-              <Edit3 className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Edit Profile</span>
-              <span className="sm:hidden">Edit</span>
-            </Button>
-          </div>
-        </div>
-        
-        {/* Mobile Profile Info */}
-        <div className="sm:hidden mt-16 mb-4 px-2">
-          <h1 className="text-xl font-bold">{formData.full_name || 'Set your name'}</h1>
-          <p className="text-muted-foreground flex items-center gap-2 mt-1 text-sm">
-            <Mail className="w-4 h-4" />
-            {profile?.email || user?.email}
-          </p>
-        </div>
-        
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-20 mb-6 sm:mb-8">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.label} className="glass-card">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="text-sm text-muted-foreground">{stat.label}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+          {/* Stats Grid - Futuristic Cards */}
+          <motion.div 
+            variants={itemVariants}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 sm:mt-20 mb-8"
+          >
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={stat.label}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur-xl shadow-xl">
+                    {/* Glowing top border */}
+                    <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${
+                      index === 0 ? 'from-blue-500 to-cyan-500' :
+                      index === 1 ? 'from-emerald-500 to-green-500' :
+                      index === 2 ? 'from-cyan-500 to-blue-500' :
+                      'from-orange-500 to-red-500'
+                    }`} />
+                    <CardContent className="p-5 flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-2xl ${stat.bg} flex items-center justify-center relative`}>
+                        <div className={`absolute inset-0 ${stat.bg} rounded-2xl blur-xl opacity-50`} />
+                        <Icon className={`w-7 h-7 ${stat.color} relative z-10`} />
+                      </div>
+                      <div>
+                        <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
+                        <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </motion.div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-card/50 p-1">
-            <TabsTrigger value="overview" className="gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="data" className="gap-2">
-              <FileText className="w-4 h-4" />
-              My Data
-            </TabsTrigger>
-          </TabsList>
+          <motion.div variants={itemVariants}>
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-xl p-1.5 border border-border/50">
+                <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/20 data-[state=active]:to-accent/20 data-[state=active]:text-foreground">
+                  <TrendingUp className="w-4 h-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="data" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/20 data-[state=active]:to-accent/20 data-[state=active]:text-foreground">
+                  <Database className="w-4 h-4" />
+                  My Data
+                </TabsTrigger>
+              </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Career Readiness */}
@@ -774,7 +845,9 @@ export default function Profile() {
               </Card>
             </div>
           </TabsContent>
-        </Tabs>
+            </Tabs>
+          </motion.div>
+        </motion.div>
       </main>
 
       {/* Edit Profile Dialog */}
