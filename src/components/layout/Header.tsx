@@ -21,12 +21,10 @@ import {
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useTheme } from '@/lib/ThemeContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useAdmin } from '@/lib/useAdmin';
+import { ThemeToggle } from './ThemeToggle';
 import {
-  Moon,
-  Sun,
   Menu,
   FileText,
   BarChart3,
@@ -103,7 +101,6 @@ interface ProfileData {
 }
 
 export function Header() {
-  const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const location = useLocation();
@@ -237,18 +234,7 @@ export function Header() {
 
         {/* Right Side */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="rounded-full"
-          >
-            {theme === 'light' ? (
-              <Moon className="w-5 h-5" />
-            ) : (
-              <Sun className="w-5 h-5" />
-            )}
-          </Button>
+          <ThemeToggle />
 
           {user ? (
             <>

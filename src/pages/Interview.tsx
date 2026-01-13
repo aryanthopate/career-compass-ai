@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,10 @@ import {
   TrendingUp,
   Award,
   Mic,
+  Zap,
+  Shield,
+  Brain,
+  Radio,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -248,177 +253,318 @@ Tell me about yourself and why you're interested in this ${role} role.`;
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container py-8 max-w-5xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-white" />
+      
+      {/* Animated Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.1)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.1)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full parallax-slow"
+          style={{
+            background: 'radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)',
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full parallax-medium"
+          style={{
+            background: 'radial-gradient(circle, hsl(339 90% 60% / 0.08) 0%, transparent 70%)',
+          }}
+        />
+      </div>
+
+      <main className="container relative z-10 py-8 max-w-5xl">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-4 mb-4">
+            <div className="relative">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 via-rose-500 to-red-500 flex items-center justify-center shadow-lg shadow-pink-500/25">
+                <MessageSquare className="w-7 h-7 text-white" />
+              </div>
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute -top-1 -right-1 w-4 h-4 bg-score-excellent rounded-full border-2 border-background"
+              />
             </div>
-            AI Interview Simulator
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Practice with an AI interviewer that challenges your responses and provides real feedback
-          </p>
-        </div>
-
-        {!currentInterview ? (
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Setup Card */}
-            <Card className="glass-card">
-              <CardContent className="p-8">
-                <div className="text-center mb-8">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-10 h-10 text-pink-500" />
-                  </div>
-                  <h2 className="text-2xl font-bold mb-2">Start Your Interview</h2>
-                  <p className="text-muted-foreground">
-                    Configure your interview settings
-                  </p>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <Label>Target Role</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {roles.slice(0, 6).map((r) => (
-                        <button
-                          key={r}
-                          onClick={() => setRole(r)}
-                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                            role === r
-                              ? 'bg-primary text-primary-foreground shadow-md'
-                              : 'bg-secondary hover:bg-secondary/80'
-                          }`}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                    <Input
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      placeholder="Or type custom role..."
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Experience Level</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {experienceLevels.map((level) => (
-                        <button
-                          key={level.value}
-                          onClick={() => setExperienceLevel(level.value)}
-                          className={`p-3 rounded-xl text-center transition-all ${
-                            experienceLevel === level.value
-                              ? 'bg-primary text-primary-foreground shadow-md'
-                              : 'bg-secondary hover:bg-secondary/80'
-                          }`}
-                        >
-                          <div className="text-sm font-medium">{level.label.split(' ')[0]}</div>
-                          <div className="text-xs opacity-80">{level.questions} questions</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button onClick={startInterview} className="w-full" size="lg" disabled={isTyping}>
-                    {isTyping ? (
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    ) : (
-                      <Play className="w-5 h-5 mr-2" />
-                    )}
-                    Begin Interview
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Info Card */}
-            <div className="space-y-6">
-              <Card className="glass-card">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-4 flex items-center gap-2">
-                    <Target className="w-5 h-5 text-primary" />
-                    What to Expect
-                  </h3>
-                  <ul className="space-y-3 text-sm">
-                    <li className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-0.5">1</Badge>
-                      <span>Answer {maxQuestions} questions covering technical and behavioral topics</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-0.5">2</Badge>
-                      <span>Receive real-time feedback on each response</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-0.5">3</Badge>
-                      <span>Get a final evaluation with detailed scores</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-score-good" />
-                    Tips for Success
-                  </h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>• Use the STAR method for behavioral questions</li>
-                    <li>• Be specific with examples from your experience</li>
-                    <li>• Keep responses focused but detailed (50-150 words)</li>
-                    <li>• Don't be afraid to ask for clarification</li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {interviewAttempts.length > 0 && (
-                <Card className="glass-card">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-4 flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-muted-foreground" />
-                      Previous Attempts ({interviewAttempts.length})
-                    </h3>
-                    <div className="space-y-2">
-                      {interviewAttempts.slice(-3).reverse().map((attempt, i) => (
-                        <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg bg-secondary/30">
-                          <span>{attempt.role}</span>
-                          {attempt.evaluation && (
-                            <Badge variant={attempt.evaluation.verdict === 'hire' ? 'default' : 'secondary'}>
-                              {attempt.evaluation.verdict}
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-2">
+                AI Interview Simulator
+                <Badge variant="outline" className="ml-2 gap-1 border-pink-500/30 text-pink-500">
+                  <Zap className="w-3 h-3" />
+                  Live
+                </Badge>
+              </h1>
+              <p className="text-muted-foreground">
+                Practice with an AI interviewer that challenges and provides real feedback
+              </p>
             </div>
           </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Interview Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Badge variant="secondary" className="gap-1">
-                  <Mic className="w-3 h-3" />
-                  Live Interview
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {currentInterview.role} • Question {Math.min(questionCount, maxQuestions)} of {maxQuestions}
-                </span>
-              </div>
-              <Button variant="outline" size="sm" onClick={resetInterview}>
-                <RotateCcw className="w-4 h-4 mr-2" />
-                New Interview
-              </Button>
-            </div>
+        </motion.div>
 
-            {/* Progress */}
-            <Progress value={(questionCount / maxQuestions) * 100} className="h-2" />
+        <AnimatePresence mode="wait">
+          {!currentInterview ? (
+            <motion.div
+              key="setup"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid lg:grid-cols-2 gap-8"
+            >
+              {/* Setup Card */}
+              <Card className="glass-card overflow-hidden border-primary/20">
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-rose-500/5" />
+                <CardContent className="relative p-8">
+                  <div className="text-center mb-8">
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200 }}
+                      className="w-20 h-20 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center mx-auto mb-4 relative"
+                    >
+                      <Brain className="w-10 h-10 text-pink-500" />
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                        className="absolute inset-0 rounded-2xl border-2 border-dashed border-pink-500/30"
+                      />
+                    </motion.div>
+                    <h2 className="text-2xl font-bold mb-2">Start Your Interview</h2>
+                    <p className="text-muted-foreground">
+                      Configure your interview settings
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-pink-500" />
+                        Target Role
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {roles.slice(0, 6).map((r, i) => (
+                          <motion.button
+                            key={r}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.05 }}
+                            onClick={() => setRole(r)}
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                              role === r
+                                ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md shadow-pink-500/25'
+                                : 'bg-secondary hover:bg-secondary/80 hover:scale-105'
+                            }`}
+                          >
+                            {r}
+                          </motion.button>
+                        ))}
+                      </div>
+                      <Input
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        placeholder="Or type custom role..."
+                        className="mt-2 border-pink-500/20 focus:border-pink-500/50"
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-pink-500" />
+                        Experience Level
+                      </Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {experienceLevels.map((level, i) => (
+                          <motion.button
+                            key={level.value}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 + i * 0.1 }}
+                            onClick={() => setExperienceLevel(level.value)}
+                            className={`p-4 rounded-xl text-center transition-all ${
+                              experienceLevel === level.value
+                                ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md shadow-pink-500/25'
+                                : 'bg-secondary hover:bg-secondary/80'
+                            }`}
+                          >
+                            <div className="text-sm font-medium">{level.label.split(' ')[0]}</div>
+                            <div className={`text-xs mt-1 ${experienceLevel === level.value ? 'text-white/80' : 'opacity-60'}`}>
+                              {level.questions} questions
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <Button 
+                        onClick={startInterview} 
+                        className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg shadow-pink-500/25" 
+                        size="lg" 
+                        disabled={isTyping}
+                      >
+                        {isTyping ? (
+                          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        ) : (
+                          <Play className="w-5 h-5 mr-2" />
+                        )}
+                        Begin Interview
+                      </Button>
+                    </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Info Cards */}
+              <div className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Card className="glass-card border-primary/10 overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-2xl" />
+                    <CardContent className="relative p-6">
+                      <h3 className="font-semibold mb-4 flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Target className="w-4 h-4 text-primary" />
+                        </div>
+                        What to Expect
+                      </h3>
+                      <ul className="space-y-3 text-sm">
+                        {[
+                          `Answer ${maxQuestions} questions covering technical and behavioral topics`,
+                          'Receive real-time feedback on each response',
+                          'Get a final evaluation with detailed scores',
+                        ].map((item, i) => (
+                          <motion.li
+                            key={i}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.4 + i * 0.1 }}
+                            className="flex items-start gap-3"
+                          >
+                            <Badge variant="outline" className="mt-0.5 h-6 w-6 flex items-center justify-center p-0">
+                              {i + 1}
+                            </Badge>
+                            <span>{item}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Card className="glass-card border-score-good/10 overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-score-good/10 to-transparent rounded-full blur-2xl" />
+                    <CardContent className="relative p-6">
+                      <h3 className="font-semibold mb-4 flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-score-good/10 flex items-center justify-center">
+                          <TrendingUp className="w-4 h-4 text-score-good" />
+                        </div>
+                        Tips for Success
+                      </h3>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-score-good" />
+                          Use the STAR method for behavioral questions
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-score-good" />
+                          Be specific with examples from your experience
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-score-good" />
+                          Keep responses focused but detailed (50-150 words)
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-score-good" />
+                          Don't be afraid to ask for clarification
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {interviewAttempts.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <Card className="glass-card">
+                      <CardContent className="p-6">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <Clock className="w-5 h-5 text-muted-foreground" />
+                          Previous Attempts ({interviewAttempts.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {interviewAttempts.slice(-3).reverse().map((attempt, i) => (
+                            <motion.div 
+                              key={i} 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: 0.5 + i * 0.1 }}
+                              className="flex items-center justify-between text-sm p-3 rounded-xl bg-secondary/50 hover:bg-secondary/80 transition-colors"
+                            >
+                              <span className="font-medium">{attempt.role}</span>
+                              {attempt.evaluation && (
+                                <Badge 
+                                  variant={attempt.evaluation.verdict === 'hire' ? 'default' : 'secondary'}
+                                  className={attempt.evaluation.verdict === 'hire' ? 'bg-score-excellent text-white' : ''}
+                                >
+                                  {attempt.evaluation.verdict}
+                                </Badge>
+                              )}
+                            </motion.div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="interview"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              {/* Interview Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Badge className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0 px-4 py-2">
+                    <Radio className="w-3 h-3 animate-pulse" />
+                    Live Interview
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {currentInterview.role} • Question {Math.min(questionCount, maxQuestions)} of {maxQuestions}
+                  </span>
+                </div>
+                <Button variant="outline" size="sm" onClick={resetInterview} className="gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  New Interview
+                </Button>
+              </div>
+
+              {/* Progress */}
+              <div className="relative">
+                <Progress value={(questionCount / maxQuestions) * 100} className="h-2" />
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 via-transparent to-rose-500/20 rounded-full" />
+              </div>
 
             {/* Chat Interface */}
             <Card className="glass-card overflow-hidden">
@@ -572,8 +718,9 @@ Tell me about yourself and why you're interested in this ${role} role.`;
                 </Button>
               </div>
             )}
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );
