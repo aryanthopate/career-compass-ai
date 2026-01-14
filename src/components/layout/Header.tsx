@@ -40,11 +40,20 @@ import {
   Settings,
   Gamepad2,
   ChevronRight,
+  Code,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 const productItems = [
+  { 
+    path: '/code-shift', 
+    label: 'Code Shift', 
+    icon: Code,
+    description: 'Convert code between languages, preserving logic',
+    color: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+  },
   { 
     path: '/resume-builder', 
     label: 'Resume Builder', 
