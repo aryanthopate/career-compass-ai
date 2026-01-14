@@ -145,6 +145,43 @@
     @apply font-semibold tracking-tight;
   }
 
+  /* Global text selection styling */
+  ::selection {
+    background: hsl(var(--primary) / 0.3);
+    color: hsl(var(--foreground));
+  }
+
+  ::-moz-selection {
+    background: hsl(var(--primary) / 0.3);
+    color: hsl(var(--foreground));
+  }
+
+  /* Code block selection */
+  pre ::selection,
+  code ::selection {
+    background: hsl(var(--primary) / 0.4);
+    color: hsl(var(--primary-foreground));
+  }
+
+  pre ::-moz-selection,
+  code ::-moz-selection {
+    background: hsl(var(--primary) / 0.4);
+    color: hsl(var(--primary-foreground));
+  }
+
+  /* Input/textarea selection */
+  input::selection,
+  textarea::selection {
+    background: hsl(var(--accent) / 0.35);
+    color: hsl(var(--foreground));
+  }
+
+  input::-moz-selection,
+  textarea::-moz-selection {
+    background: hsl(var(--accent) / 0.35);
+    color: hsl(var(--foreground));
+  }
+
   /* Universal smooth scroll for all scrollable elements */
   * {
     scroll-behavior: smooth;

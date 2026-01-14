@@ -1,59 +1,50 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
 } from '@/components/ui/sheet';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/AuthContext';
 import { useAdmin } from '@/lib/useAdmin';
+import { supabase } from '@/integrations/supabase/client';
 import { ThemeToggle } from './ThemeToggle';
-import {
-  Menu,
+import { 
+  Menu, 
+  User, 
+  LogOut, 
+  ChevronDown,
+  Home,
+  Settings,
+  ShieldCheck,
+  Compass,
+  Bot,
+  ChevronRight,
   FileText,
-  BarChart3,
   Target,
   MessageSquare,
-  Compass,
-  LogOut,
-  User,
-  ChevronDown,
-  Bot,
-  Home,
-  Shield,
-  Settings,
+  BarChart3,
   Gamepad2,
-  ChevronRight,
   Code,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
-const productItems = [
-  { 
-    path: '/code-shift', 
-    label: 'Code Shift', 
-    icon: Code,
-    description: 'Convert code between languages, preserving logic',
-    color: 'text-purple-500',
-    bg: 'bg-purple-500/10',
-  },
+// Old products - existing career tools
+const oldProductItems = [
   { 
     path: '/resume-builder', 
     label: 'Resume Builder', 
@@ -104,57 +95,92 @@ const productItems = [
   },
 ];
 
-interface ProfileData {
+// New products - engineering tools
+const newProductItems = [
+  { 
+    path: '/code-shift', 
+    label: 'Code Shift', 
+    icon: Code,
+    description: 'Convert code between languages, preserving logic',
+    color: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+    isNew: true,
+  },
+];
+
+// Combined for mobile
+const allProductItems = [...newProductItems, ...oldProductItems];
+
+interface Profile {
   full_name: string | null;
   avatar_url: string | null;
 }
 
-export function Header() {
+export const Header = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileData | null>(null);
 
   useEffect(() => {
-    if (user) {
-      loadProfile();
-    } else {
-      setProfile(null);
-    }
+    const fetchProfile = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('user_id', user.id)
+          .single();
+        if (data) setProfile(data);
+      }
+    };
+    fetchProfile();
   }, [user]);
-
-  const loadProfile = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name, avatar_url')
-      .eq('user_id', user.id)
-      .single();
-    if (data) setProfile(data);
-  };
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
-    setMobileMenuOpen(false);
+    navigate('/auth');
   };
 
-  const getInitials = (name: string | null | undefined, email: string | undefined) => {
+  const getInitials = (name: string | null | undefined, email: string | undefined): string => {
     if (name) {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
-    if (!email) return 'U';
-    return email[0].toUpperCase();
+    return email?.charAt(0).toUpperCase() || 'U';
   };
 
   const getDisplayName = () => {
     if (profile?.full_name) return profile.full_name;
-    return user?.email;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
   };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  const renderProductItem = (item: typeof oldProductItems[0] & { isNew?: boolean }, isActive: boolean) => {
+    const Icon = item.icon;
+    return (
+      <div className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-200 ${
+        isActive ? 'bg-primary/10' : 'hover:bg-secondary'
+      }`}>
+        <div className={`w-9 h-9 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0`}>
+          <Icon className={`w-4 h-4 ${item.color}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-sm truncate">{item.label}</p>
+            {item.isNew && (
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-gradient-to-r from-primary to-violet-500 text-white rounded-full uppercase tracking-wide">
+                New
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -189,27 +215,43 @@ export function Header() {
                 <ChevronDown className="w-4 h-4" />
               </Button>
             </HoverCardTrigger>
-            <HoverCardContent className="w-96 p-3" align="start">
-              <div className="grid gap-1">
-                {productItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Link key={item.path} to={item.path}>
-                      <div className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-200 ${
-                        isActive ? 'bg-primary/10' : 'hover:bg-secondary'
-                      }`}>
-                        <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center flex-shrink-0`}>
-                          <Icon className={`w-5 h-5 ${item.color}`} />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{item.label}</p>
-                          <p className="text-xs text-muted-foreground">{item.description}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+            <HoverCardContent className="w-[600px] p-4" align="start">
+              <div className="grid grid-cols-2 gap-6">
+                {/* New Products Column */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3 px-1">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">New Products</span>
+                  </div>
+                  <div className="space-y-1">
+                    {newProductItems.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <Link key={item.path} to={item.path}>
+                          {renderProductItem(item, isActive)}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Old Products Column */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3 px-1">
+                    <Zap className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Career Tools</span>
+                  </div>
+                  <div className="space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+                    {oldProductItems.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <Link key={item.path} to={item.path}>
+                          {renderProductItem(item, isActive)}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </HoverCardContent>
           </HoverCard>
@@ -226,15 +268,15 @@ export function Header() {
             </Button>
           </Link>
 
-          {/* Admin Link */}
+          {/* Admin Panel */}
           {isAdmin && (
             <Link to="/admin">
               <Button 
                 variant={location.pathname.startsWith('/admin') ? 'secondary' : 'ghost'} 
                 size="sm" 
-                className="gap-1.5 text-destructive"
+                className="gap-1.5"
               >
-                <Shield className="w-4 h-4" />
+                <ShieldCheck className="w-4 h-4" />
                 Admin
               </Button>
             </Link>
@@ -314,31 +356,59 @@ export function Header() {
                         </Button>
                       </Link>
 
+                      {/* New Products */}
                       <div className="py-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
-                          Products
-                        </p>
-                        {productItems.map((item) => {
+                        <div className="flex items-center gap-2 px-3 mb-2">
+                          <Sparkles className="w-3.5 h-3.5 text-primary" />
+                          <p className="text-xs font-semibold text-primary uppercase tracking-wider">
+                            New Products
+                          </p>
+                        </div>
+                        {newProductItems.map((item) => {
                           const Icon = item.icon;
                           const isActive = location.pathname === item.path;
                           return (
                             <Link key={item.path} to={item.path} onClick={closeMobileMenu}>
                               <Button
                                 variant={isActive ? 'secondary' : 'ghost'}
-                                className="w-full justify-start gap-3 h-12 mb-1"
+                                className="w-full justify-start gap-3 h-12"
                               >
-                                <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center`}>
-                                  <Icon className={`w-4 h-4 ${item.color}`} />
+                                <Icon className={`w-5 h-5 ${item.color}`} />
+                                <div className="flex items-center gap-2">
+                                  {item.label}
+                                  <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-gradient-to-r from-primary to-violet-500 text-white rounded-full">
+                                    NEW
+                                  </span>
                                 </div>
-                                <span className="flex-1 text-left">{item.label}</span>
-                                <ChevronRight className="w-4 h-4 opacity-50" />
+                                <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
                               </Button>
                             </Link>
                           );
                         })}
                       </div>
 
-                      <div className="h-px bg-border" />
+                      {/* Career Tools */}
+                      <div className="py-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
+                          Career Tools
+                        </p>
+                        {oldProductItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <Link key={item.path} to={item.path} onClick={closeMobileMenu}>
+                              <Button
+                                variant={isActive ? 'secondary' : 'ghost'}
+                                className="w-full justify-start gap-3 h-12"
+                              >
+                                <Icon className={`w-5 h-5 ${item.color}`} />
+                                {item.label}
+                                <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                              </Button>
+                            </Link>
+                          );
+                        })}
+                      </div>
 
                       {/* AI Chats */}
                       <Link to="/chat" onClick={closeMobileMenu}>
@@ -349,102 +419,71 @@ export function Header() {
                         </Button>
                       </Link>
 
-                      {/* Profile */}
-                      <Link to="/profile" onClick={closeMobileMenu}>
-                        <Button variant={location.pathname === '/profile' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-12">
-                          <User className="w-5 h-5" />
-                          My Profile
-                          <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
-                        </Button>
-                      </Link>
-
-                      {/* Settings */}
-                      <Link to="/profile?tab=settings" onClick={closeMobileMenu}>
-                        <Button variant="ghost" className="w-full justify-start gap-3 h-12">
-                          <Settings className="w-5 h-5" />
-                          Settings
-                          <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
-                        </Button>
-                      </Link>
-
-                      {/* Admin */}
+                      {/* Admin Panel */}
                       {isAdmin && (
-                        <>
-                          <div className="h-px bg-border my-2" />
-                          <Link to="/admin" onClick={closeMobileMenu}>
-                            <Button variant="ghost" className="w-full justify-start gap-3 h-12 text-destructive hover:text-destructive">
-                              <Shield className="w-5 h-5" />
-                              Admin Panel
-                              <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
-                            </Button>
-                          </Link>
-                        </>
+                        <Link to="/admin" onClick={closeMobileMenu}>
+                          <Button variant={location.pathname.startsWith('/admin') ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-12 text-primary">
+                            <ShieldCheck className="w-5 h-5" />
+                            Admin Panel
+                            <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
+                          </Button>
+                        </Link>
                       )}
                     </div>
                   </ScrollArea>
 
-                  {/* Bottom Sign Out */}
+                  {/* Bottom actions */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
-                    <Button variant="outline" onClick={handleSignOut} className="w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive/10">
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1 gap-2" onClick={() => { navigate('/profile'); closeMobileMenu(); }}>
+                        <User className="w-4 h-4" />
+                        Profile
+                      </Button>
+                      <Button variant="destructive" className="flex-1 gap-2" onClick={() => { handleSignOut(); closeMobileMenu(); }}>
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </Button>
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
             </>
           ) : (
             <>
-              {/* Mobile Menu for non-logged in users */}
+              <Link to="/auth">
+                <Button className="gap-2">
+                  Get Started
+                </Button>
+              </Link>
+
+              {/* Mobile Menu for Non-logged users */}
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="lg:hidden">
                     <Menu className="w-5 h-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[300px] p-0">
-                  <SheetHeader className="p-6 pb-4 border-b">
+                <SheetContent side="right" className="w-[280px]">
+                  <SheetHeader>
                     <SheetTitle>Menu</SheetTitle>
                   </SheetHeader>
-                  <div className="p-4 space-y-2">
+                  <div className="mt-6 space-y-3">
                     <Link to="/" onClick={closeMobileMenu}>
-                      <Button variant="ghost" className="w-full justify-start gap-3 h-12">
-                        <Home className="w-5 h-5" />
+                      <Button variant="ghost" className="w-full justify-start gap-2">
+                        <Home className="w-4 h-4" />
                         Home
                       </Button>
                     </Link>
-                    <div className="py-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">Products</p>
-                      {productItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link key={item.path} to={item.path} onClick={closeMobileMenu}>
-                            <Button variant="ghost" className="w-full justify-start gap-3 h-11 mb-1">
-                              <Icon className={`w-4 h-4 ${item.color}`} />
-                              {item.label}
-                            </Button>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
                     <Link to="/auth" onClick={closeMobileMenu}>
                       <Button className="w-full">Get Started</Button>
                     </Link>
                   </div>
                 </SheetContent>
               </Sheet>
-
-              <Link to="/auth" className="hidden lg:block">
-                <Button size="sm" className="shadow-sm">
-                  Get Started
-                </Button>
-              </Link>
             </>
           )}
         </div>
       </div>
     </header>
   );
-}
+};
