@@ -41,6 +41,7 @@ import {
   Code,
   Sparkles,
   Zap,
+  Presentation,
 } from 'lucide-react';
 
 // Old products - existing career tools
@@ -104,6 +105,15 @@ const newProductItems = [
     description: 'Convert code between languages, preserving logic',
     color: 'text-purple-500',
     bg: 'bg-purple-500/10',
+    isNew: true,
+  },
+  { 
+    path: '/ppt-generator', 
+    label: 'PPT Generator', 
+    icon: Presentation,
+    description: 'Create stunning presentations with AI magic',
+    color: 'text-amber-500',
+    bg: 'bg-amber-500/10',
     isNew: true,
   },
 ];

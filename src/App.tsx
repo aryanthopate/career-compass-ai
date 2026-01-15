@@ -23,6 +23,7 @@ import SharedResume from "./pages/SharedResume";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import CodeShift from "./pages/CodeShift";
+import PPTGenerator from "./pages/PPTGenerator";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -62,6 +63,7 @@ function FloatingElements() {
     '/games',
     '/profile',
     '/code-shift',
+    '/ppt-generator',
   ];
   
   const shouldHide = hiddenPaths.some(path => {
@@ -88,6 +90,7 @@ function AppContent() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/code-shift" element={<ProtectedRoute><CodeShift /></ProtectedRoute>} />
+        <Route path="/ppt-generator" element={<ProtectedRoute><PPTGenerator /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/resume-builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
         <Route path="/resume-analysis" element={<ProtectedRoute><ResumeAnalysis /></ProtectedRoute>} />
