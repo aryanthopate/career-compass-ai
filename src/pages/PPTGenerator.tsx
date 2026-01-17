@@ -125,232 +125,403 @@ export default function PPTGenerator() {
       pptx.subject = prompt;
       pptx.layout = 'LAYOUT_WIDE';
 
-      const colorMap: Record<string, { primary: string; secondary: string; accent: string; bg: string; text: string; gradient: string[] }> = {
-        ocean: { primary: '1e40af', secondary: '3b82f6', accent: '93c5fd', bg: '0f172a', text: 'FFFFFF', gradient: ['0f172a', '1e40af'] },
-        sunset: { primary: 'ea580c', secondary: 'fb923c', accent: 'fed7aa', bg: '7c2d12', text: 'FFFFFF', gradient: ['7c2d12', 'ea580c'] },
-        forest: { primary: '16a34a', secondary: '4ade80', accent: 'bbf7d0', bg: '14532d', text: 'FFFFFF', gradient: ['14532d', '16a34a'] },
-        royal: { primary: '7c3aed', secondary: 'a78bfa', accent: 'ddd6fe', bg: '4c1d95', text: 'FFFFFF', gradient: ['4c1d95', '7c3aed'] },
-        midnight: { primary: '475569', secondary: '64748b', accent: '94a3b8', bg: '020617', text: 'FFFFFF', gradient: ['020617', '1e293b'] },
-        aurora: { primary: '7c3aed', secondary: 'ec4899', accent: 'f59e0b', bg: '4c1d95', text: 'FFFFFF', gradient: ['7c3aed', 'ec4899'] },
+      // Premium color palettes with gradients
+      const colorMap: Record<string, { 
+        primary: string; secondary: string; accent: string; bg: string; text: string; 
+        gradient1: string; gradient2: string; gradient3: string; glow: string; dark: string; 
+      }> = {
+        ocean: { primary: '3b82f6', secondary: '6366f1', accent: '06b6d4', bg: '0f172a', text: 'FFFFFF', gradient1: '0f172a', gradient2: '1e3a5f', gradient3: '3b82f6', glow: '60a5fa', dark: '020617' },
+        sunset: { primary: 'f97316', secondary: 'ef4444', accent: 'fbbf24', bg: '1c1917', text: 'FFFFFF', gradient1: '7c2d12', gradient2: 'c2410c', gradient3: 'fb923c', glow: 'fdba74', dark: '0c0a09' },
+        forest: { primary: '22c55e', secondary: '14b8a6', accent: '84cc16', bg: '0f1f17', text: 'FFFFFF', gradient1: '052e16', gradient2: '166534', gradient3: '4ade80', glow: '86efac', dark: '022c22' },
+        royal: { primary: 'a855f7', secondary: 'ec4899', accent: '8b5cf6', bg: '1e1033', text: 'FFFFFF', gradient1: '2e1065', gradient2: '6b21a8', gradient3: 'c084fc', glow: 'd8b4fe', dark: '0c0015' },
+        midnight: { primary: '64748b', secondary: '94a3b8', accent: 'e2e8f0', bg: '0f172a', text: 'FFFFFF', gradient1: '020617', gradient2: '1e293b', gradient3: '475569', glow: '94a3b8', dark: '000000' },
+        aurora: { primary: 'a855f7', secondary: 'ec4899', accent: '22d3ee', bg: '0f0720', text: 'FFFFFF', gradient1: '4c1d95', gradient2: 'be185d', gradient3: '06b6d4', glow: 'f0abfc', dark: '0a0015' },
       };
 
       const colors = colorMap[selectedColor] || colorMap.ocean;
+      const totalSlides = slides.length;
 
       slides.forEach((slide, index) => {
         const pptSlide = pptx.addSlide();
         
-        // Modern gradient backgrounds
+        // ===== TITLE SLIDE - Ultra Premium Design =====
         if (index === 0 || slide.layout === 'title') {
-          pptSlide.background = { 
-            color: colors.bg,
-          };
+          // Dark gradient background
+          pptSlide.background = { color: colors.dark };
           
-          // Add decorative shape
-          pptSlide.addShape('rect', {
-            x: 0, y: 0, w: '100%', h: '100%',
-            fill: { type: 'solid', color: colors.bg },
+          // Large decorative gradient circle (top-right)
+          pptSlide.addShape('ellipse', {
+            x: 6, y: -2, w: 7, h: 7,
+            fill: { 
+              type: 'solid', 
+              color: colors.gradient2,
+            },
           });
           
-          // Accent line
-          pptSlide.addShape('rect', {
-            x: 0.5, y: 2.8, w: 2, h: 0.1,
+          // Medium accent circle (bottom-left)
+          pptSlide.addShape('ellipse', {
+            x: -2, y: 3, w: 5, h: 5,
+            fill: { type: 'solid', color: colors.primary },
+          });
+          
+          // Small glow orb
+          pptSlide.addShape('ellipse', {
+            x: 8, y: 4, w: 1.5, h: 1.5,
             fill: { type: 'solid', color: colors.accent },
           });
           
-          // Icon if available
+          // Thin accent line
+          pptSlide.addShape('rect', {
+            x: 0.8, y: 2.4, w: 3, h: 0.08,
+            fill: { type: 'solid', color: colors.accent },
+          });
+          
+          // Icon with glow effect background
           if (slide.icon) {
+            pptSlide.addShape('ellipse', {
+              x: 0.65, y: 1.2, w: 1.2, h: 1.2,
+              fill: { type: 'solid', color: colors.gradient2 },
+            });
             pptSlide.addText(slide.icon, {
-              x: 0.5, y: 1.5, w: 1, h: 0.8,
-              fontSize: 48,
+              x: 0.65, y: 1.2, w: 1.2, h: 1.2,
+              fontSize: 40, align: 'center', valign: 'middle',
             });
           }
 
+          // Main title with shadow effect
           pptSlide.addText(slide.title, {
-            x: 0.5, y: 3, w: 9, h: 1.5,
-            fontSize: 48, bold: true, color: 'FFFFFF',
-            fontFace: 'Arial',
+            x: 0.8, y: 2.6, w: 8.5, h: 1.5,
+            fontSize: 54, bold: true, color: 'FFFFFF',
+            fontFace: 'Arial Black',
           });
           
+          // Subtitle with accent color
           if (slide.subtitle) {
             pptSlide.addText(slide.subtitle, {
-              x: 0.5, y: 4.3, w: 9, h: 0.8,
-              fontSize: 24, color: colors.accent,
+              x: 0.8, y: 4.2, w: 8, h: 0.8,
+              fontSize: 22, color: colors.glow,
               fontFace: 'Arial',
             });
           }
-        } else {
-          // Content slides with modern design
-          pptSlide.background = { color: 'FFFFFF' };
           
-          // Header accent bar
+          // Bottom decorative bar
           pptSlide.addShape('rect', {
-            x: 0, y: 0, w: '100%', h: 0.15,
-            fill: { type: 'solid', color: colors.primary },
+            x: 0, y: 5.35, w: '100%', h: 0.15,
+            fill: { type: 'solid', color: colors.accent },
           });
           
-          // Side accent
+        } else {
+          // ===== CONTENT SLIDES - Modern Design =====
+          
+          // Clean white/light background
+          pptSlide.background = { color: 'F8FAFC' };
+          
+          // Top gradient header bar
           pptSlide.addShape('rect', {
-            x: 0, y: 0, w: 0.08, h: '100%',
+            x: 0, y: 0, w: '100%', h: 1.2,
+            fill: { type: 'solid', color: colors.bg },
+          });
+          
+          // Accent corner shape (top-right decoration)
+          pptSlide.addShape('ellipse', {
+            x: 8.5, y: -0.8, w: 3, h: 3,
+            fill: { type: 'solid', color: colors.gradient2 },
+          });
+          
+          // Small accent orb
+          pptSlide.addShape('ellipse', {
+            x: 9.2, y: 0.2, w: 0.6, h: 0.6,
+            fill: { type: 'solid', color: colors.accent },
+          });
+          
+          // Left sidebar accent
+          pptSlide.addShape('rect', {
+            x: 0, y: 1.2, w: 0.12, h: 4.3,
             fill: { type: 'solid', color: colors.primary },
           });
 
-          // Icon
+          // Icon in header
           if (slide.icon) {
+            pptSlide.addShape('ellipse', {
+              x: 0.4, y: 0.25, w: 0.7, h: 0.7,
+              fill: { type: 'solid', color: colors.gradient2 },
+            });
             pptSlide.addText(slide.icon, {
-              x: 0.4, y: 0.4, w: 0.6, h: 0.6,
-              fontSize: 32,
+              x: 0.4, y: 0.25, w: 0.7, h: 0.7,
+              fontSize: 26, align: 'center', valign: 'middle',
             });
           }
 
-          // Title with colored accent
+          // Title in header
           pptSlide.addText(slide.title, {
-            x: 1.1, y: 0.35, w: 8.4, h: 0.8,
-            fontSize: 32, bold: true, color: colors.bg,
+            x: 1.3, y: 0.3, w: 7, h: 0.7,
+            fontSize: 28, bold: true, color: 'FFFFFF',
             fontFace: 'Arial',
           });
 
-          // Content based on layout
+          // ===== LAYOUT SPECIFIC CONTENT =====
+          
           if (slide.layout === 'image-left' || slide.layout === 'image-right') {
-            const textX = slide.layout === 'image-left' ? 5.2 : 0.4;
-            const imageX = slide.layout === 'image-left' ? 0.4 : 5.2;
+            const imageX = slide.layout === 'image-left' ? 0.4 : 5.3;
+            const textX = slide.layout === 'image-left' ? 5.0 : 0.4;
             
-            // Image placeholder or actual image
+            // Image container with rounded effect
+            pptSlide.addShape('roundRect', {
+              x: imageX, y: 1.5, w: 4.5, h: 3.3,
+              fill: { type: 'solid', color: colors.bg },
+              rectRadius: 0.15,
+            });
+            
             if (slide.generatedImage) {
               pptSlide.addImage({
                 data: slide.generatedImage,
-                x: imageX, y: 1.3, w: 4.5, h: 3.5,
+                x: imageX + 0.1, y: 1.6, w: 4.3, h: 3.1,
               });
             } else {
-              pptSlide.addShape('rect', {
-                x: imageX, y: 1.3, w: 4.5, h: 3.5,
-                fill: { type: 'solid', color: colors.accent },
-              });
-              pptSlide.addText('📷 Image', {
-                x: imageX, y: 2.8, w: 4.5, h: 0.5,
-                fontSize: 18, color: colors.primary, align: 'center',
+              pptSlide.addText('🖼️', {
+                x: imageX, y: 2.6, w: 4.5, h: 1,
+                fontSize: 48, align: 'center', color: colors.glow,
               });
             }
             
+            // Content bullets with modern styling
             if (slide.content && slide.content.length > 0) {
-              const bulletText = slide.content.map(item => ({ text: `• ${item}\n`, options: { fontSize: 16, color: '333333', paraSpaceAfter: 10 } }));
-              pptSlide.addText(bulletText, {
-                x: textX, y: 1.3, w: 4.3, h: 3.5,
-                valign: 'top', fontFace: 'Arial',
+              slide.content.forEach((item, i) => {
+                // Bullet circle
+                pptSlide.addShape('ellipse', {
+                  x: textX, y: 1.7 + (i * 0.7), w: 0.18, h: 0.18,
+                  fill: { type: 'solid', color: colors.primary },
+                });
+                pptSlide.addText(item, {
+                  x: textX + 0.35, y: 1.6 + (i * 0.7), w: 4, h: 0.6,
+                  fontSize: 15, color: '334155',
+                  fontFace: 'Arial',
+                });
               });
             }
+            
           } else if (slide.layout === 'stats') {
-            // Stats layout with big numbers
-            const statColumns = Math.min(slide.content?.length || 3, 4);
-            const colWidth = 9 / statColumns;
+            // Stats cards with glassmorphism effect
+            const statCount = Math.min(slide.content?.length || 4, 4);
+            const cardWidth = (9.2 / statCount) - 0.3;
+            
             slide.content?.slice(0, 4).forEach((item, i) => {
               const parts = item.split(':');
-              const label = parts[0] || '';
-              const value = parts[1] || item;
+              const label = parts[0]?.trim() || '';
+              const value = parts[1]?.trim() || item;
+              const xPos = 0.4 + (i * (cardWidth + 0.3));
               
-              pptSlide.addText(value.trim(), {
-                x: 0.4 + (i * colWidth), y: 2, w: colWidth - 0.2, h: 1,
-                fontSize: 36, bold: true, color: colors.primary, align: 'center',
+              // Card background
+              pptSlide.addShape('roundRect', {
+                x: xPos, y: 1.6, w: cardWidth, h: 2.8,
+                fill: { type: 'solid', color: 'FFFFFF' },
+                rectRadius: 0.12,
+                shadow: { type: 'outer', blur: 8, offset: 2, angle: 45, color: '000000', opacity: 0.1 },
               });
-              pptSlide.addText(label.trim(), {
-                x: 0.4 + (i * colWidth), y: 3, w: colWidth - 0.2, h: 0.5,
-                fontSize: 14, color: '666666', align: 'center',
+              
+              // Accent bar on card
+              pptSlide.addShape('rect', {
+                x: xPos, y: 1.6, w: cardWidth, h: 0.15,
+                fill: { type: 'solid', color: colors.primary },
+              });
+              
+              // Big number
+              pptSlide.addText(value, {
+                x: xPos, y: 2.0, w: cardWidth, h: 1.2,
+                fontSize: 40, bold: true, color: colors.bg, align: 'center',
+                fontFace: 'Arial Black',
+              });
+              
+              // Label
+              pptSlide.addText(label, {
+                x: xPos, y: 3.4, w: cardWidth, h: 0.7,
+                fontSize: 13, color: '64748b', align: 'center',
+                fontFace: 'Arial',
               });
             });
+            
           } else if (slide.layout === 'quote') {
+            // Large quote marks
+            pptSlide.addText('"', {
+              x: 0.5, y: 1.5, w: 1.5, h: 1.5,
+              fontSize: 120, color: colors.glow,
+              fontFace: 'Georgia', bold: true,
+            });
+            
+            // Quote text with elegant styling
             const quoteText = slide.content?.[0] || slide.subtitle || '';
-            pptSlide.addText(`"${quoteText}"`, {
-              x: 1, y: 1.8, w: 8, h: 2,
-              fontSize: 28, italic: true, color: colors.primary, align: 'center',
+            pptSlide.addText(quoteText, {
+              x: 1.2, y: 2.2, w: 7.5, h: 2,
+              fontSize: 26, italic: true, color: colors.bg, align: 'center',
               fontFace: 'Georgia',
             });
+            
+            // Author with line
             if (slide.content?.[1]) {
-              pptSlide.addText(`— ${slide.content[1]}`, {
-                x: 1, y: 3.8, w: 8, h: 0.5,
-                fontSize: 16, color: '666666', align: 'center',
+              pptSlide.addShape('rect', {
+                x: 4.25, y: 4.2, w: 1.5, h: 0.04,
+                fill: { type: 'solid', color: colors.primary },
+              });
+              pptSlide.addText(slide.content[1], {
+                x: 1, y: 4.4, w: 8, h: 0.5,
+                fontSize: 16, color: '64748b', align: 'center',
+                fontFace: 'Arial',
               });
             }
+            
           } else if (slide.layout === 'two-column' || slide.layout === 'comparison') {
             const half = Math.ceil((slide.content?.length || 0) / 2);
             const leftContent = slide.content?.slice(0, half) || [];
             const rightContent = slide.content?.slice(half) || [];
             
-            // Divider line
-            pptSlide.addShape('line', {
-              x: 5, y: 1.3, w: 0, h: 3.5,
-              line: { color: colors.accent, width: 1 },
+            // Left column card
+            pptSlide.addShape('roundRect', {
+              x: 0.35, y: 1.5, w: 4.4, h: 3.4,
+              fill: { type: 'solid', color: 'FFFFFF' },
+              rectRadius: 0.1,
+              shadow: { type: 'outer', blur: 6, offset: 2, angle: 45, color: '000000', opacity: 0.08 },
             });
             
-            if (leftContent.length > 0) {
-              const leftBullets = leftContent.map(item => ({ text: `• ${item}\n`, options: { fontSize: 16, color: '333333', paraSpaceAfter: 8 } }));
-              pptSlide.addText(leftBullets, {
-                x: 0.4, y: 1.3, w: 4.4, h: 3.5,
-                valign: 'top', fontFace: 'Arial',
-              });
-            }
-            if (rightContent.length > 0) {
-              const rightBullets = rightContent.map(item => ({ text: `• ${item}\n`, options: { fontSize: 16, color: '333333', paraSpaceAfter: 8 } }));
-              pptSlide.addText(rightBullets, {
-                x: 5.2, y: 1.3, w: 4.4, h: 3.5,
-                valign: 'top', fontFace: 'Arial',
-              });
-            }
-          } else if (slide.layout === 'timeline') {
-            // Timeline with connected dots
-            const items = slide.content?.slice(0, 5) || [];
-            const stepWidth = 9 / items.length;
+            // Right column card  
+            pptSlide.addShape('roundRect', {
+              x: 5.05, y: 1.5, w: 4.4, h: 3.4,
+              fill: { type: 'solid', color: 'FFFFFF' },
+              rectRadius: 0.1,
+              shadow: { type: 'outer', blur: 6, offset: 2, angle: 45, color: '000000', opacity: 0.08 },
+            });
             
-            // Timeline line
+            // Left column header bar
             pptSlide.addShape('rect', {
-              x: 0.5, y: 2.4, w: 9, h: 0.05,
-              fill: { type: 'solid', color: colors.accent },
+              x: 0.35, y: 1.5, w: 4.4, h: 0.12,
+              fill: { type: 'solid', color: colors.primary },
+            });
+            
+            // Right column header bar
+            pptSlide.addShape('rect', {
+              x: 5.05, y: 1.5, w: 4.4, h: 0.12,
+              fill: { type: 'solid', color: colors.secondary },
+            });
+            
+            // Left content
+            leftContent.forEach((item, i) => {
+              pptSlide.addShape('ellipse', {
+                x: 0.55, y: 1.92 + (i * 0.62), w: 0.14, h: 0.14,
+                fill: { type: 'solid', color: colors.primary },
+              });
+              pptSlide.addText(item, {
+                x: 0.85, y: 1.8 + (i * 0.62), w: 3.7, h: 0.55,
+                fontSize: 13, color: '334155', fontFace: 'Arial',
+              });
+            });
+            
+            // Right content
+            rightContent.forEach((item, i) => {
+              pptSlide.addShape('ellipse', {
+                x: 5.25, y: 1.92 + (i * 0.62), w: 0.14, h: 0.14,
+                fill: { type: 'solid', color: colors.secondary },
+              });
+              pptSlide.addText(item, {
+                x: 5.55, y: 1.8 + (i * 0.62), w: 3.7, h: 0.55,
+                fontSize: 13, color: '334155', fontFace: 'Arial',
+              });
+            });
+            
+          } else if (slide.layout === 'timeline') {
+            const items = slide.content?.slice(0, 5) || [];
+            const stepWidth = 8.6 / items.length;
+            
+            // Main timeline line with gradient look
+            pptSlide.addShape('rect', {
+              x: 0.6, y: 2.7, w: 8.6, h: 0.08,
+              fill: { type: 'solid', color: colors.glow },
             });
             
             items.forEach((item, i) => {
-              // Dot
+              const xPos = 0.6 + (i * stepWidth) + (stepWidth / 2) - 0.25;
+              
+              // Outer glow ring
               pptSlide.addShape('ellipse', {
-                x: 0.5 + (i * stepWidth) + (stepWidth / 2) - 0.15, y: 2.25, w: 0.3, h: 0.3,
+                x: xPos - 0.1, y: 2.45, w: 0.7, h: 0.7,
+                fill: { type: 'solid', color: colors.glow },
+              });
+              
+              // Inner circle with number
+              pptSlide.addShape('ellipse', {
+                x: xPos, y: 2.55, w: 0.5, h: 0.5,
                 fill: { type: 'solid', color: colors.primary },
               });
-              // Step number
+              
               pptSlide.addText(`${i + 1}`, {
-                x: 0.5 + (i * stepWidth) + (stepWidth / 2) - 0.15, y: 2.25, w: 0.3, h: 0.3,
-                fontSize: 12, color: 'FFFFFF', align: 'center', valign: 'middle', bold: true,
+                x: xPos, y: 2.55, w: 0.5, h: 0.5,
+                fontSize: 16, color: 'FFFFFF', align: 'center', valign: 'middle', bold: true,
               });
-              // Label
+              
+              // Step label box
+              pptSlide.addShape('roundRect', {
+                x: xPos - (stepWidth / 2) + 0.3, y: 3.35, w: stepWidth - 0.3, h: 1.2,
+                fill: { type: 'solid', color: 'FFFFFF' },
+                rectRadius: 0.08,
+                shadow: { type: 'outer', blur: 4, offset: 1, angle: 45, color: '000000', opacity: 0.06 },
+              });
+              
               pptSlide.addText(item, {
-                x: 0.3 + (i * stepWidth), y: 2.7, w: stepWidth - 0.1, h: 1,
-                fontSize: 12, color: '333333', align: 'center', valign: 'top',
+                x: xPos - (stepWidth / 2) + 0.35, y: 3.45, w: stepWidth - 0.4, h: 1,
+                fontSize: 11, color: '334155', align: 'center', valign: 'top',
+                fontFace: 'Arial',
               });
             });
+            
           } else {
-            // Default content layout with styled bullets
+            // ===== DEFAULT CONTENT LAYOUT - Premium Bullets =====
             if (slide.content && slide.content.length > 0) {
               slide.content.forEach((item, i) => {
-                // Bullet dot
+                const yPos = 1.55 + (i * 0.72);
+                
+                // Bullet container with subtle background
+                pptSlide.addShape('roundRect', {
+                  x: 0.35, y: yPos, w: 9.1, h: 0.62,
+                  fill: { type: 'solid', color: i % 2 === 0 ? 'FFFFFF' : 'F1F5F9' },
+                  rectRadius: 0.08,
+                });
+                
+                // Colored bullet dot
                 pptSlide.addShape('ellipse', {
-                  x: 0.5, y: 1.5 + (i * 0.7), w: 0.15, h: 0.15,
+                  x: 0.55, y: yPos + 0.2, w: 0.22, h: 0.22,
                   fill: { type: 'solid', color: colors.primary },
                 });
-                // Text
+                
+                // Bullet text
                 pptSlide.addText(item, {
-                  x: 0.8, y: 1.4 + (i * 0.7), w: 8.7, h: 0.6,
-                  fontSize: 18, color: '333333',
+                  x: 0.95, y: yPos + 0.08, w: 8.3, h: 0.5,
+                  fontSize: 16, color: '1e293b',
                   fontFace: 'Arial',
                 });
               });
             }
           }
-        }
-
-        // Slide number (except title slide)
-        if (index > 0) {
+          
+          // ===== FOOTER FOR ALL CONTENT SLIDES =====
+          
+          // Bottom accent line
+          pptSlide.addShape('rect', {
+            x: 0, y: 5.35, w: '100%', h: 0.08,
+            fill: { type: 'solid', color: colors.primary },
+          });
+          
+          // Slide number badge
+          pptSlide.addShape('roundRect', {
+            x: 9.0, y: 5.0, w: 0.65, h: 0.4,
+            fill: { type: 'solid', color: colors.bg },
+            rectRadius: 0.05,
+          });
+          
           pptSlide.addText(`${index + 1}`, {
-            x: 9.2, y: 5.1, w: 0.4, h: 0.3,
-            fontSize: 10, color: colors.primary, align: 'right',
+            x: 9.0, y: 5.0, w: 0.65, h: 0.4,
+            fontSize: 11, color: 'FFFFFF', align: 'center', valign: 'middle', bold: true,
           });
         }
 
-        // Add notes
+        // Add speaker notes
         if (slide.notes) {
           pptSlide.addNotes(slide.notes);
         }
@@ -358,7 +529,7 @@ export default function PPTGenerator() {
 
       const fileName = `${prompt.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '_')}_presentation.pptx`;
       await pptx.writeFile({ fileName });
-      toast.success('✨ Presentation downloaded!');
+      toast.success('🎨 Stunning presentation downloaded!');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download presentation');
