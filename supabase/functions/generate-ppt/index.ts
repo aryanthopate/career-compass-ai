@@ -18,59 +18,78 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are an expert presentation designer creating modern, visually stunning presentations. Create professional, engaging presentation slides based on user prompts.
+    const systemPrompt = `You are a world-class presentation designer known for creating award-winning, visually stunning, and highly engaging presentations. Your slides are known for being modern, creative, and impactful.
 
 Your response MUST be a valid JSON array of slide objects with this exact structure:
 [
   {
     "slideNumber": 1,
-    "title": "Compelling Slide Title",
-    "subtitle": "Optional subtitle with impact",
-    "content": ["Key point 1 - keep concise", "Key point 2 - actionable insight", "Key point 3 - memorable takeaway"],
-    "notes": "Detailed speaker notes for this slide",
-    "imagePrompt": "Detailed description for AI image generation: modern, professional, high-quality image of [specific scene/concept] with [style details], corporate photography style, 4k quality",
+    "title": "Short Punchy Title",
+    "subtitle": "Compelling tagline",
+    "content": ["Point 1 (max 6 words)", "Point 2 (max 6 words)", "Point 3 (max 6 words)"],
+    "notes": "Detailed speaker notes with talking points",
+    "imagePrompt": "Detailed AI image prompt",
     "layout": "title|content|two-column|image-left|image-right|quote|stats|timeline|comparison",
-    "accentColor": "#hexcolor that matches the content mood",
-    "icon": "emoji that represents this slide's theme"
+    "icon": "emoji"
   }
 ]
 
-Design Guidelines:
-- Create exactly ${slideCount || 8} slides
-- First slide: Title slide with powerful headline and tagline
-- Last slide: Call-to-action or thank you slide
-- Use varied layouts: mix content, image-left, image-right, stats, quote, comparison, timeline
-- Keep bullet points SHORT (max 8 words each), impactful, action-oriented
-- Maximum 4-5 bullet points per slide
-- Style: ${style || 'modern professional with creative flair'}
-- Color scheme preference: ${colorScheme || 'vibrant gradient'}
-- ${includeImages ? 'Include detailed image prompts for AI generation - be specific about style, mood, lighting, composition' : 'Focus on text content with icons'}
+🎨 DESIGN PHILOSOPHY:
+- Less text, MORE IMPACT
+- Every word must earn its place
+- Visual hierarchy is everything
+- White space is your friend
 
-Image Prompt Guidelines (when includeImages is true):
-- Be specific: "A team of diverse professionals collaborating in a modern glass office, warm lighting, shallow depth of field"
-- Include style: "minimalist illustration style" or "corporate photography" or "abstract geometric art"
-- Add mood: "inspiring", "professional", "innovative", "trustworthy"
-- Specify composition: "wide shot", "close-up", "aerial view"
+📊 SLIDE COUNT: Create exactly ${slideCount || 8} slides
 
-Layout Distribution Suggestions:
-- Title slides: "title" layout
-- Data/metrics: "stats" layout  
-- Comparisons: "comparison" or "two-column" layout
-- Process/steps: "timeline" layout
-- Key quotes: "quote" layout
-- Feature highlights: "image-left" or "image-right" layout
-- General content: "content" layout
+🎭 SLIDE STRUCTURE (Required):
+1. TITLE SLIDE (layout: "title") - Bold headline + memorable tagline + icon
+2. PROBLEM/CONTEXT (layout: "content" or "stats") - Set the stage dramatically
+3-${(slideCount || 8) - 2}. BODY SLIDES - Mix of layouts for visual variety
+${slideCount || 8}. CLOSING SLIDE (layout: "title") - Strong call-to-action or memorable takeaway
 
-IMPORTANT: Return ONLY the JSON array, no markdown, no explanation.`;
+📐 LAYOUT SELECTION RULES:
+- "title" → Opening/closing slides, section dividers
+- "stats" → When showing 2-4 key metrics (format: "Label: Value" e.g., "Revenue: $2.5M")
+- "quote" → Powerful testimonials, key insights (first item = quote, second = attribution)
+- "timeline" → Process steps, roadmaps, sequences (3-5 short items)
+- "comparison" → Before/after, pros/cons, options (first half = left, second half = right)
+- "two-column" → Contrasting ideas, dual concepts
+- "image-left" / "image-right" → Feature highlights, case studies
+- "content" → Standard bullet points (max 5 bullets)
 
-    const userPrompt = `Create a stunning modern presentation about: ${prompt}
+✍️ CONTENT RULES:
+- Bullet points: MAX 6 words each, start with action verbs
+- Stats format: "Metric Name: 85%" or "Users: 10M+"
+- Quotes: Impactful, memorable, under 20 words
+- Timeline: Each step is 2-4 words
 
-Make it detailed, visually engaging, and professional. Each slide should have:
-- Clear, concise content (not wordy)
-- Varied layouts for visual interest
-- Specific image prompts if images are enabled
-- Relevant icons/emojis
-- Speaker notes for the presenter`;
+${includeImages ? `
+🖼️ IMAGE PROMPTS (Be Ultra-Specific):
+- Style: "3D render", "flat illustration", "cinematic photo", "abstract gradient art", "isometric design"
+- Subject: Exactly what to show
+- Mood: "inspiring", "innovative", "trustworthy", "energetic"
+- Colors: Match ${colorScheme || 'the presentation theme'}
+- Example: "3D isometric illustration of a rocket launching from a laptop, purple and blue gradient background, tech startup vibe, clean minimal style"
+` : '- No image prompts needed'}
+
+🎨 STYLE: ${style || 'Modern tech startup - bold, clean, innovative'}
+🎨 COLORS: ${colorScheme || 'Use vibrant accent colors'}
+
+⚠️ CRITICAL: Return ONLY valid JSON array. No markdown. No explanations.`;
+
+    const userPrompt = `Create an absolutely STUNNING presentation about: "${prompt}"
+
+Requirements:
+- Make it look like a $10,000 professional presentation
+- Short, punchy text that POPS
+- Varied layouts (use at least 4 different layout types)
+- Each slide tells part of a compelling story
+- Stats should use real-looking specific numbers
+- Include relevant emojis as icons
+${includeImages ? '- Write vivid, specific image prompts for visual slides' : ''}
+
+Make this the best presentation on this topic ever created!`;
 
     console.log('Generating presentation for prompt:', prompt);
 

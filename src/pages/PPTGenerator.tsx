@@ -588,42 +588,87 @@ export default function PPTGenerator() {
   const currentColorScheme = colorSchemes.find(c => c.id === selectedColor);
 
   const renderSlidePreview = (slide: Slide, isMain = false) => {
-    const size = isMain ? 'text-2xl md:text-3xl' : 'text-xs';
-    const contentSize = isMain ? 'text-base md:text-lg' : 'text-[8px]';
+    const size = isMain ? 'text-xl md:text-3xl' : 'text-[10px]';
+    const contentSize = isMain ? 'text-sm md:text-base' : 'text-[7px]';
+    const gradientClass = currentColorScheme?.gradient || 'from-primary via-primary/80 to-accent';
     
+    // ===== TITLE SLIDE - Premium Dark Theme =====
     if (slide.layout === 'title' || slide.slideNumber === 1) {
       return (
-        <div className={`absolute inset-0 bg-gradient-to-br ${currentColorScheme?.gradient || 'from-primary to-primary/80'} flex flex-col items-center justify-center text-center p-4 md:p-8`}>
-          {slide.icon && <span className={isMain ? 'text-4xl mb-4' : 'text-lg mb-1'}>{slide.icon}</span>}
-          <h2 className={`${size} font-bold text-white mb-2 md:mb-4`}>{slide.title}</h2>
-          {slide.subtitle && <p className={`${contentSize} text-white/80`}>{slide.subtitle}</p>}
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} overflow-hidden`}>
+          {/* Decorative elements */}
+          <div className="absolute -top-20 -right-20 w-40 h-40 md:w-64 md:h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 md:w-48 md:h-48 rounded-full bg-white/5 blur-2xl" />
+          <div className="absolute top-1/4 right-1/4 w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/10 blur-xl" />
+          
+          {/* Content */}
+          <div className="relative h-full flex flex-col justify-center p-4 md:p-12">
+            {/* Accent line */}
+            <div className="w-12 md:w-20 h-1 bg-white/60 rounded-full mb-3 md:mb-6" />
+            
+            {/* Icon */}
+            {slide.icon && (
+              <motion.div 
+                className={`${isMain ? 'text-3xl md:text-5xl' : 'text-lg'} mb-2 md:mb-4 w-fit p-2 md:p-3 rounded-xl bg-white/10 backdrop-blur`}
+                animate={isMain ? { scale: [1, 1.05, 1] } : {}}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                {slide.icon}
+              </motion.div>
+            )}
+            
+            {/* Title */}
+            <h2 className={`${isMain ? 'text-2xl md:text-5xl' : 'text-sm'} font-black text-white leading-tight mb-2 md:mb-4`}>
+              {slide.title}
+            </h2>
+            
+            {/* Subtitle */}
+            {slide.subtitle && (
+              <p className={`${isMain ? 'text-base md:text-xl' : 'text-[8px]'} text-white/70 max-w-lg`}>
+                {slide.subtitle}
+              </p>
+            )}
+          </div>
+          
+          {/* Bottom accent bar */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 md:h-2 bg-gradient-to-r from-white/20 via-white/40 to-white/20" />
         </div>
       );
     }
 
+    // ===== IMAGE LAYOUTS =====
     if (slide.layout === 'image-left' || slide.layout === 'image-right') {
       return (
-        <div className="h-full flex flex-col p-3 md:p-6">
-          <div className="flex items-center gap-2 mb-2 md:mb-4">
-            {slide.icon && <span className={isMain ? 'text-2xl' : 'text-sm'}>{slide.icon}</span>}
-            <h3 className={`${size} font-bold text-primary`}>{slide.title}</h3>
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2`}>
+            {slide.icon && <span className={`${isMain ? 'text-xl' : 'text-xs'} bg-white/20 p-1 md:p-2 rounded-lg`}>{slide.icon}</span>}
+            <h3 className={`${size} font-bold text-white`}>{slide.title}</h3>
           </div>
-          <div className={`flex-1 grid ${slide.layout === 'image-left' ? 'grid-cols-2' : 'grid-cols-2'} gap-2 md:gap-4`}>
+          
+          {/* Content Grid */}
+          <div className={`flex-1 grid grid-cols-2 gap-2 md:gap-4 p-2 md:p-4`}>
             <div className={slide.layout === 'image-left' ? 'order-1' : 'order-2'}>
               {slide.generatedImage ? (
-                <img src={slide.generatedImage} alt="" className="w-full h-full object-cover rounded-lg" />
+                <img src={slide.generatedImage} alt="" className="w-full h-full object-cover rounded-xl shadow-lg" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg flex items-center justify-center">
-                  <ImagePlus className={`${isMain ? 'w-8 h-8' : 'w-4 h-4'} text-primary/50`} />
+                <div className={`w-full h-full bg-gradient-to-br ${gradientClass} rounded-xl flex items-center justify-center shadow-lg`}>
+                  <ImagePlus className={`${isMain ? 'w-10 h-10' : 'w-4 h-4'} text-white/50`} />
                 </div>
               )}
             </div>
-            <div className={`${slide.layout === 'image-left' ? 'order-2' : 'order-1'} flex flex-col justify-center`}>
+            <div className={`${slide.layout === 'image-left' ? 'order-2' : 'order-1'} flex flex-col justify-center space-y-1 md:space-y-3`}>
               {slide.content?.map((item, i) => (
-                <div key={i} className={`flex items-start gap-1 md:gap-2 ${contentSize} mb-1`}>
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary mt-1 flex-shrink-0" />
-                  <span className="line-clamp-2">{item}</span>
-                </div>
+                <motion.div 
+                  key={i} 
+                  className="flex items-start gap-1 md:gap-3"
+                  initial={isMain ? { opacity: 0, x: slide.layout === 'image-left' ? 20 : -20 } : false}
+                  animate={isMain ? { opacity: 1, x: 0 } : false}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <div className={`${isMain ? 'w-2 h-2 mt-2' : 'w-1 h-1 mt-0.5'} rounded-full bg-primary flex-shrink-0`} />
+                  <span className={`${contentSize} text-foreground`}>{item}</span>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -631,37 +676,58 @@ export default function PPTGenerator() {
       );
     }
 
+    // ===== QUOTE LAYOUT =====
     if (slide.layout === 'quote') {
       return (
-        <div className="h-full flex flex-col items-center justify-center p-4 md:p-8 text-center">
-          <Quote className={`${isMain ? 'w-8 h-8' : 'w-4 h-4'} text-primary/30 mb-2`} />
-          <p className={`${isMain ? 'text-xl md:text-2xl' : 'text-xs'} italic text-primary font-medium mb-2`}>
+        <div className="h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 md:p-8 relative overflow-hidden">
+          {/* Decorative quote marks */}
+          <div className={`absolute top-4 left-4 md:top-8 md:left-8 ${isMain ? 'text-6xl md:text-9xl' : 'text-2xl'} font-serif text-primary/10`}>"</div>
+          <div className={`absolute bottom-4 right-4 md:bottom-8 md:right-8 ${isMain ? 'text-6xl md:text-9xl' : 'text-2xl'} font-serif text-primary/10 rotate-180`}>"</div>
+          
+          <Quote className={`${isMain ? 'w-6 h-6 md:w-10 md:h-10' : 'w-3 h-3'} text-primary mb-2 md:mb-4`} />
+          <p className={`${isMain ? 'text-lg md:text-2xl' : 'text-[9px]'} italic text-foreground font-medium text-center max-w-xl mb-2 md:mb-4 leading-relaxed`}>
             "{slide.content?.[0] || slide.subtitle}"
           </p>
           {slide.content?.[1] && (
-            <p className={`${contentSize} text-muted-foreground`}>— {slide.content[1]}</p>
+            <div className="flex items-center gap-2">
+              <div className={`${isMain ? 'w-8' : 'w-4'} h-0.5 bg-primary`} />
+              <p className={`${contentSize} text-muted-foreground font-medium`}>{slide.content[1]}</p>
+            </div>
           )}
         </div>
       );
     }
 
+    // ===== STATS LAYOUT =====
     if (slide.layout === 'stats') {
       return (
-        <div className="h-full flex flex-col p-3 md:p-6">
-          <div className="flex items-center gap-2 mb-2 md:mb-4">
-            {slide.icon && <span className={isMain ? 'text-2xl' : 'text-sm'}>{slide.icon}</span>}
-            <h3 className={`${size} font-bold text-primary`}>{slide.title}</h3>
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2`}>
+            {slide.icon && <span className={`${isMain ? 'text-xl' : 'text-xs'} bg-white/20 p-1 md:p-2 rounded-lg`}>{slide.icon}</span>}
+            <h3 className={`${size} font-bold text-white`}>{slide.title}</h3>
           </div>
-          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+          
+          {/* Stats Grid */}
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 p-2 md:p-4">
             {slide.content?.slice(0, 4).map((item, i) => {
               const parts = item.split(':');
+              const label = parts[0]?.trim() || '';
+              const value = parts[1]?.trim() || item;
               return (
-                <div key={i} className="flex flex-col items-center justify-center p-2 bg-primary/5 rounded-lg">
-                  <span className={`${isMain ? 'text-2xl md:text-3xl' : 'text-sm'} font-bold text-primary`}>
-                    {parts[1]?.trim() || item}
+                <motion.div 
+                  key={i} 
+                  className="flex flex-col items-center justify-center p-2 md:p-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-primary/10"
+                  initial={isMain ? { opacity: 0, y: 20 } : false}
+                  animate={isMain ? { opacity: 1, y: 0 } : false}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <div className={`w-full h-1 bg-gradient-to-r ${gradientClass} rounded-full mb-2 md:mb-3`} />
+                  <span className={`${isMain ? 'text-xl md:text-3xl' : 'text-xs'} font-black text-primary`}>
+                    {value}
                   </span>
-                  <span className={`${contentSize} text-muted-foreground text-center`}>{parts[0]?.trim()}</span>
-                </div>
+                  <span className={`${isMain ? 'text-xs md:text-sm' : 'text-[6px]'} text-muted-foreground text-center mt-1`}>{label}</span>
+                </motion.div>
               );
             })}
           </div>
@@ -669,24 +735,42 @@ export default function PPTGenerator() {
       );
     }
 
+    // ===== TIMELINE LAYOUT =====
     if (slide.layout === 'timeline') {
       return (
-        <div className="h-full flex flex-col p-3 md:p-6">
-          <div className="flex items-center gap-2 mb-2 md:mb-4">
-            {slide.icon && <span className={isMain ? 'text-2xl' : 'text-sm'}>{slide.icon}</span>}
-            <h3 className={`${size} font-bold text-primary`}>{slide.title}</h3>
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2`}>
+            {slide.icon && <span className={`${isMain ? 'text-xl' : 'text-xs'} bg-white/20 p-1 md:p-2 rounded-lg`}>{slide.icon}</span>}
+            <h3 className={`${size} font-bold text-white`}>{slide.title}</h3>
           </div>
-          <div className="flex-1 flex items-center">
+          
+          {/* Timeline */}
+          <div className="flex-1 flex items-center p-2 md:p-6">
             <div className="w-full relative">
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-primary/20 -translate-y-1/2" />
+              {/* Timeline line */}
+              <div className={`absolute top-1/2 left-0 right-0 h-0.5 md:h-1 bg-gradient-to-r ${gradientClass} -translate-y-1/2 rounded-full`} />
+              
               <div className="flex justify-between relative">
                 {slide.content?.slice(0, 5).map((item, i) => (
-                  <div key={i} className="flex flex-col items-center">
-                    <div className={`${isMain ? 'w-6 h-6' : 'w-3 h-3'} rounded-full bg-primary flex items-center justify-center text-white ${isMain ? 'text-xs' : 'text-[6px]'} font-bold`}>
+                  <motion.div 
+                    key={i} 
+                    className="flex flex-col items-center"
+                    initial={isMain ? { opacity: 0, y: 20 } : false}
+                    animate={isMain ? { opacity: 1, y: 0 } : false}
+                    transition={{ delay: i * 0.15 }}
+                  >
+                    {/* Glow effect */}
+                    <div className={`${isMain ? 'w-8 h-8 md:w-12 md:h-12' : 'w-4 h-4'} rounded-full bg-primary/20 absolute blur-md`} />
+                    {/* Circle with number */}
+                    <div className={`${isMain ? 'w-6 h-6 md:w-10 md:h-10' : 'w-3 h-3'} rounded-full bg-gradient-to-br ${gradientClass} flex items-center justify-center text-white ${isMain ? 'text-xs md:text-base' : 'text-[6px]'} font-bold shadow-lg relative z-10`}>
                       {i + 1}
                     </div>
-                    <span className={`${contentSize} text-center mt-1 max-w-16 line-clamp-2`}>{item}</span>
-                  </div>
+                    {/* Label card */}
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-1 md:p-2 mt-1 md:mt-3 max-w-16 md:max-w-24 border border-primary/10">
+                      <span className={`${isMain ? 'text-[10px] md:text-xs' : 'text-[5px]'} text-center block text-foreground`}>{item}</span>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -695,27 +779,90 @@ export default function PPTGenerator() {
       );
     }
 
-    // Default content layout
-    return (
-      <div className="h-full flex flex-col p-3 md:p-6">
-        <div className="flex items-center gap-2 mb-2 md:mb-4">
-          {slide.icon && <span className={isMain ? 'text-2xl' : 'text-sm'}>{slide.icon}</span>}
-          <h3 className={`${size} font-bold text-primary`}>{slide.title}</h3>
+    // ===== COMPARISON / TWO-COLUMN LAYOUT =====
+    if (slide.layout === 'two-column' || slide.layout === 'comparison') {
+      const half = Math.ceil((slide.content?.length || 0) / 2);
+      const leftContent = slide.content?.slice(0, half) || [];
+      const rightContent = slide.content?.slice(half) || [];
+      
+      return (
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2`}>
+            {slide.icon && <span className={`${isMain ? 'text-xl' : 'text-xs'} bg-white/20 p-1 md:p-2 rounded-lg`}>{slide.icon}</span>}
+            <h3 className={`${size} font-bold text-white`}>{slide.title}</h3>
+          </div>
+          
+          {/* Columns */}
+          <div className="flex-1 grid grid-cols-2 gap-2 md:gap-4 p-2 md:p-4">
+            {/* Left Column */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-2 md:p-4 border-t-4 border-primary">
+              <div className="space-y-1 md:space-y-2">
+                {leftContent.map((item, i) => (
+                  <motion.div 
+                    key={i} 
+                    className="flex items-start gap-1 md:gap-2"
+                    initial={isMain ? { opacity: 0, x: -10 } : false}
+                    animate={isMain ? { opacity: 1, x: 0 } : false}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <div className={`${isMain ? 'w-1.5 h-1.5 mt-1.5' : 'w-1 h-1 mt-0.5'} rounded-full bg-primary flex-shrink-0`} />
+                    <span className={contentSize}>{item}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Right Column */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-2 md:p-4 border-t-4 border-accent">
+              <div className="space-y-1 md:space-y-2">
+                {rightContent.map((item, i) => (
+                  <motion.div 
+                    key={i} 
+                    className="flex items-start gap-1 md:gap-2"
+                    initial={isMain ? { opacity: 0, x: 10 } : false}
+                    animate={isMain ? { opacity: 1, x: 0 } : false}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <div className={`${isMain ? 'w-1.5 h-1.5 mt-1.5' : 'w-1 h-1 mt-0.5'} rounded-full bg-accent flex-shrink-0`} />
+                    <span className={contentSize}>{item}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex-1 space-y-1 md:space-y-3">
+      );
+    }
+
+    // ===== DEFAULT CONTENT LAYOUT =====
+    return (
+      <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+        {/* Header */}
+        <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2`}>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+          {slide.icon && <span className={`${isMain ? 'text-xl' : 'text-xs'} bg-white/20 p-1 md:p-2 rounded-lg relative z-10`}>{slide.icon}</span>}
+          <h3 className={`${size} font-bold text-white relative z-10`}>{slide.title}</h3>
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 p-2 md:p-6 space-y-1 md:space-y-3">
           {slide.content?.map((item, i) => (
             <motion.div
               key={i}
               initial={isMain ? { opacity: 0, x: -20 } : false}
               animate={isMain ? { opacity: 1, x: 0 } : false}
-              transition={{ delay: i * 0.1 }}
-              className={`flex items-start gap-2 ${contentSize}`}
+              transition={{ delay: i * 0.08 }}
+              className={`flex items-start gap-2 md:gap-3 p-1.5 md:p-3 rounded-lg ${i % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-slate-100 dark:bg-slate-800/50'} shadow-sm`}
             >
-              <div className="w-2 h-2 rounded-full bg-primary mt-1 flex-shrink-0" />
-              <span>{item}</span>
+              <div className={`${isMain ? 'w-2 h-2 mt-1.5' : 'w-1 h-1 mt-0.5'} rounded-full bg-gradient-to-br ${gradientClass} flex-shrink-0`} />
+              <span className={`${contentSize} text-foreground`}>{item}</span>
             </motion.div>
           ))}
         </div>
+        
+        {/* Footer accent */}
+        <div className={`h-1 bg-gradient-to-r ${gradientClass}`} />
       </div>
     );
   };
