@@ -26,7 +26,7 @@ interface Slide {
   notes?: string;
   imagePrompt?: string;
   generatedImage?: string;
-  layout: 'title' | 'content' | 'two-column' | 'image-left' | 'image-right' | 'quote' | 'stats' | 'timeline' | 'comparison';
+  layout: 'title' | 'content' | 'two-column' | 'image-left' | 'image-right' | 'quote' | 'stats' | 'timeline' | 'comparison' | 'spotlight' | 'hero-statement' | 'metrics-grid' | 'features-grid' | 'section-break';
   accentColor?: string;
   icon?: string;
 }
@@ -50,15 +50,20 @@ const colorSchemes = [
 ];
 
 const layoutOptions = [
-  { id: 'title', name: 'Title', icon: Layout, description: 'Big centered title' },
+  { id: 'title', name: 'Title', icon: Layout, description: 'Cinematic opening' },
+  { id: 'spotlight', name: 'Spotlight', icon: Zap, description: 'Feature focus' },
+  { id: 'hero-statement', name: 'Hero', icon: Quote, description: 'Bold statement' },
+  { id: 'stats', name: 'Stats', icon: BarChart3, description: 'Key metrics' },
+  { id: 'metrics-grid', name: 'Metrics', icon: LayoutGrid, description: 'Data grid' },
+  { id: 'features-grid', name: 'Features', icon: Layers, description: 'Feature cards' },
   { id: 'content', name: 'Content', icon: Layers, description: 'Bullet points' },
   { id: 'image-left', name: 'Image Left', icon: ImagePlus, description: 'Image + text' },
   { id: 'image-right', name: 'Image Right', icon: ImagePlus, description: 'Text + image' },
   { id: 'two-column', name: 'Two Column', icon: MoveHorizontal, description: 'Split layout' },
-  { id: 'quote', name: 'Quote', icon: Quote, description: 'Big quote' },
-  { id: 'stats', name: 'Statistics', icon: BarChart3, description: 'Numbers focus' },
+  { id: 'quote', name: 'Quote', icon: Quote, description: 'Testimonial' },
   { id: 'comparison', name: 'Comparison', icon: GitCompare, description: 'Side by side' },
   { id: 'timeline', name: 'Timeline', icon: Clock, description: 'Process steps' },
+  { id: 'section-break', name: 'Section', icon: Layout, description: 'Divider slide' },
 ];
 
 export default function PPTGenerator() {
@@ -643,6 +648,224 @@ export default function PPTGenerator() {
               });
             });
             
+          } else if (slide.layout === 'spotlight') {
+            // ===== SPOTLIGHT - SINGLE FEATURE FOCUS =====
+            
+            // Large icon with holographic effect
+            pptSlide.addShape('ellipse', {
+              x: 0.5, y: 1.8, w: 2.5, h: 2.5,
+              fill: { type: 'solid', color: colors.gradient2 },
+            });
+            pptSlide.addShape('ellipse', {
+              x: 0.6, y: 1.9, w: 2.3, h: 2.3,
+              fill: { type: 'solid', color: colors.primary },
+            });
+            pptSlide.addShape('ellipse', {
+              x: 0.8, y: 2.1, w: 1.9, h: 1.9,
+              fill: { type: 'solid', color: colors.neon },
+            });
+            
+            if (slide.icon) {
+              pptSlide.addText(slide.icon, {
+                x: 0.5, y: 1.8, w: 2.5, h: 2.5,
+                fontSize: 72, align: 'center', valign: 'middle',
+              });
+            }
+            
+            // Feature title
+            pptSlide.addText(slide.title, {
+              x: 3.5, y: 2.0, w: 6, h: 0.8,
+              fontSize: 36, bold: true, color: colors.dark,
+              fontFace: 'Arial Black',
+            });
+            
+            // Accent underline
+            pptSlide.addShape('rect', {
+              x: 3.5, y: 2.85, w: 2, h: 0.1,
+              fill: { type: 'solid', color: colors.primary },
+            });
+            
+            // Supporting points
+            if (slide.content && slide.content.length > 0) {
+              slide.content.slice(0, 3).forEach((item, i) => {
+                pptSlide.addShape('ellipse', {
+                  x: 3.5, y: 3.25 + (i * 0.55), w: 0.2, h: 0.2,
+                  fill: { type: 'solid', color: colors.neon },
+                });
+                pptSlide.addText(item, {
+                  x: 3.85, y: 3.18 + (i * 0.55), w: 5.5, h: 0.45,
+                  fontSize: 18, color: '475569', fontFace: 'Arial',
+                });
+              });
+            }
+            
+          } else if (slide.layout === 'hero-statement') {
+            // ===== HERO STATEMENT - BIG BOLD CENTERED =====
+            
+            // Full dark background
+            pptSlide.background = { color: colors.dark };
+            
+            // Ambient orbs
+            pptSlide.addShape('ellipse', {
+              x: -2, y: -2, w: 6, h: 6,
+              fill: { type: 'solid', color: colors.gradient2 },
+            });
+            pptSlide.addShape('ellipse', {
+              x: 7, y: 2, w: 5, h: 5,
+              fill: { type: 'solid', color: colors.primary },
+            });
+            
+            // Central statement
+            const statement = slide.content?.[0] || slide.subtitle || slide.title;
+            pptSlide.addText(statement, {
+              x: 0.8, y: 1.8, w: 8.4, h: 2.2,
+              fontSize: 52, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle',
+              fontFace: 'Arial Black',
+            });
+            
+            // Bottom accent bar
+            pptSlide.addShape('rect', {
+              x: 3.5, y: 4.2, w: 3, h: 0.12,
+              fill: { type: 'solid', color: colors.neon },
+            });
+            
+            // Attribution if present
+            if (slide.content?.[1]) {
+              pptSlide.addText(slide.content[1], {
+                x: 0, y: 4.5, w: 10, h: 0.5,
+                fontSize: 18, color: colors.glow, align: 'center',
+                fontFace: 'Arial',
+              });
+            }
+            
+          } else if (slide.layout === 'metrics-grid') {
+            // ===== METRICS GRID - 4-6 SMALL METRIC CARDS =====
+            const metrics = slide.content?.slice(0, 6) || [];
+            const cols = metrics.length <= 4 ? 2 : 3;
+            const rows = Math.ceil(metrics.length / cols);
+            const cardW = (9 / cols) - 0.3;
+            const cardH = (3.2 / rows) - 0.2;
+            
+            metrics.forEach((item, i) => {
+              const parts = item.split(':');
+              const label = parts[0]?.trim() || '';
+              const value = parts[1]?.trim() || item;
+              const col = i % cols;
+              const row = Math.floor(i / cols);
+              const xPos = 0.4 + (col * (cardW + 0.3));
+              const yPos = 1.65 + (row * (cardH + 0.2));
+              
+              // Card with gradient top
+              pptSlide.addShape('roundRect', {
+                x: xPos, y: yPos, w: cardW, h: cardH,
+                fill: { type: 'solid', color: 'FFFFFF' },
+                rectRadius: 0.12,
+                shadow: { type: 'outer', blur: 8, offset: 2, angle: 45, color: '000000', opacity: 0.08 },
+              });
+              
+              // Top gradient bar
+              pptSlide.addShape('rect', {
+                x: xPos, y: yPos, w: cardW, h: 0.15,
+                fill: { type: 'solid', color: i % 2 === 0 ? colors.primary : colors.secondary },
+              });
+              
+              // Value
+              pptSlide.addText(value, {
+                x: xPos, y: yPos + 0.3, w: cardW, h: 0.7,
+                fontSize: 32, bold: true, color: colors.dark, align: 'center',
+                fontFace: 'Arial Black',
+              });
+              
+              // Label
+              pptSlide.addText(label.toUpperCase(), {
+                x: xPos, y: yPos + cardH - 0.5, w: cardW, h: 0.4,
+                fontSize: 10, color: '64748b', align: 'center', bold: true,
+                fontFace: 'Arial',
+              });
+            });
+            
+          } else if (slide.layout === 'features-grid') {
+            // ===== FEATURES GRID - ICON CARDS =====
+            const features = slide.content?.slice(0, 6) || [];
+            const cols = features.length <= 4 ? 2 : 3;
+            const rows = Math.ceil(features.length / cols);
+            const cardW = (9 / cols) - 0.3;
+            const cardH = (3.2 / rows) - 0.2;
+            
+            const featureIcons = ['🚀', '⚡', '🎯', '💎', '🔥', '✨'];
+            
+            features.forEach((item, i) => {
+              const col = i % cols;
+              const row = Math.floor(i / cols);
+              const xPos = 0.4 + (col * (cardW + 0.3));
+              const yPos = 1.65 + (row * (cardH + 0.2));
+              
+              // Card
+              pptSlide.addShape('roundRect', {
+                x: xPos, y: yPos, w: cardW, h: cardH,
+                fill: { type: 'solid', color: 'FFFFFF' },
+                rectRadius: 0.12,
+                shadow: { type: 'outer', blur: 8, offset: 2, angle: 45, color: '000000', opacity: 0.08 },
+              });
+              
+              // Left accent
+              pptSlide.addShape('rect', {
+                x: xPos, y: yPos, w: 0.1, h: cardH,
+                fill: { type: 'solid', color: colors.primary },
+              });
+              
+              // Icon circle
+              pptSlide.addShape('ellipse', {
+                x: xPos + 0.25, y: yPos + (cardH / 2) - 0.3, w: 0.6, h: 0.6,
+                fill: { type: 'solid', color: colors.glow },
+              });
+              pptSlide.addText(featureIcons[i] || '✨', {
+                x: xPos + 0.25, y: yPos + (cardH / 2) - 0.3, w: 0.6, h: 0.6,
+                fontSize: 20, align: 'center', valign: 'middle',
+              });
+              
+              // Feature text
+              pptSlide.addText(item, {
+                x: xPos + 1, y: yPos + (cardH / 2) - 0.25, w: cardW - 1.2, h: 0.5,
+                fontSize: 14, color: '334155', fontFace: 'Arial',
+              });
+            });
+            
+          } else if (slide.layout === 'section-break') {
+            // ===== SECTION BREAK - DRAMATIC DIVIDER =====
+            pptSlide.background = { color: colors.dark };
+            
+            // Large centered orb
+            pptSlide.addShape('ellipse', {
+              x: 2, y: 0.5, w: 6, h: 6,
+              fill: { type: 'solid', color: colors.gradient2 },
+            });
+            pptSlide.addShape('ellipse', {
+              x: 2.5, y: 1, w: 5, h: 5,
+              fill: { type: 'solid', color: colors.primary },
+            });
+            
+            // Section number/icon
+            if (slide.icon) {
+              pptSlide.addText(slide.icon, {
+                x: 0, y: 1.8, w: 10, h: 1.2,
+                fontSize: 72, color: 'FFFFFF', align: 'center',
+              });
+            }
+            
+            // Section title
+            pptSlide.addText(slide.title.toUpperCase(), {
+              x: 0, y: 3.2, w: 10, h: 1,
+              fontSize: 48, bold: true, color: 'FFFFFF', align: 'center',
+              fontFace: 'Arial Black',
+            });
+            
+            // Subtitle line
+            pptSlide.addShape('rect', {
+              x: 4, y: 4.3, w: 2, h: 0.08,
+              fill: { type: 'solid', color: colors.neon },
+            });
+            
           } else {
             // ===== DEFAULT CONTENT - MODERN ALTERNATING CARDS =====
             if (slide.content && slide.content.length > 0) {
@@ -1020,6 +1243,188 @@ export default function PPTGenerator() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ===== SPOTLIGHT LAYOUT =====
+    if (slide.layout === 'spotlight') {
+      return (
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2`}>
+            <h3 className={`${size} font-bold text-white`}>{slide.title}</h3>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 flex p-3 md:p-6 gap-4 md:gap-8">
+            {/* Large Icon */}
+            <motion.div 
+              className={`${isMain ? 'w-24 h-24 md:w-36 md:h-36' : 'w-10 h-10'} rounded-full bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-2xl flex-shrink-0`}
+              animate={isMain ? { scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] } : {}}
+              transition={{ duration: 4, repeat: Infinity }}
+            >
+              <span className={`${isMain ? 'text-4xl md:text-6xl' : 'text-lg'}`}>{slide.icon || '✨'}</span>
+            </motion.div>
+            
+            {/* Points */}
+            <div className="flex-1 flex flex-col justify-center space-y-2 md:space-y-4">
+              {slide.content?.slice(0, 3).map((item, i) => (
+                <motion.div
+                  key={i}
+                  className={`flex items-center gap-2 md:gap-4 p-2 md:p-4 rounded-xl bg-white dark:bg-slate-800 shadow-lg border-l-4 ${i === 0 ? 'border-primary' : i === 1 ? 'border-accent' : 'border-secondary'}`}
+                  initial={isMain ? { opacity: 0, x: 30 } : false}
+                  animate={isMain ? { opacity: 1, x: 0 } : false}
+                  transition={{ delay: i * 0.15 }}
+                >
+                  <div className={`${isMain ? 'w-3 h-3' : 'w-1.5 h-1.5'} rounded-full bg-gradient-to-br ${gradientClass}`} />
+                  <span className={`${contentSize} text-foreground font-medium`}>{item}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ===== HERO STATEMENT LAYOUT =====
+    if (slide.layout === 'hero-statement') {
+      const statement = slide.content?.[0] || slide.subtitle || slide.title;
+      return (
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} overflow-hidden`}>
+          {/* Ambient orbs */}
+          <div className="absolute -top-20 -left-20 w-48 h-48 md:w-80 md:h-80 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 md:w-64 md:h-64 rounded-full bg-white/5 blur-2xl" />
+          
+          {/* Content */}
+          <div className="relative h-full flex flex-col items-center justify-center p-4 md:p-12 text-center">
+            <motion.p 
+              className={`${isMain ? 'text-xl md:text-4xl' : 'text-sm'} font-black text-white leading-tight max-w-3xl`}
+              initial={isMain ? { opacity: 0, y: 20 } : false}
+              animate={isMain ? { opacity: 1, y: 0 } : false}
+            >
+              "{statement}"
+            </motion.p>
+            
+            {/* Accent line */}
+            <motion.div 
+              className="w-16 md:w-32 h-1 bg-white/60 rounded-full mt-4 md:mt-8"
+              initial={isMain ? { scaleX: 0 } : false}
+              animate={isMain ? { scaleX: 1 } : false}
+              transition={{ delay: 0.3 }}
+            />
+            
+            {/* Attribution */}
+            {slide.content?.[1] && (
+              <p className={`${isMain ? 'text-base md:text-xl' : 'text-[8px]'} text-white/70 mt-2 md:mt-4`}>
+                — {slide.content[1]}
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== METRICS GRID LAYOUT =====
+    if (slide.layout === 'metrics-grid') {
+      return (
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2`}>
+            {slide.icon && <span className={`${isMain ? 'text-xl' : 'text-xs'} bg-white/20 p-1 md:p-2 rounded-lg`}>{slide.icon}</span>}
+            <h3 className={`${size} font-bold text-white`}>{slide.title}</h3>
+          </div>
+          
+          {/* Metrics Grid */}
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 p-2 md:p-4">
+            {slide.content?.slice(0, 6).map((item, i) => {
+              const parts = item.split(':');
+              const label = parts[0]?.trim() || '';
+              const value = parts[1]?.trim() || item;
+              return (
+                <motion.div 
+                  key={i} 
+                  className="flex flex-col items-center justify-center p-2 md:p-3 bg-white dark:bg-slate-800 rounded-xl shadow-lg border-t-2 border-primary/50"
+                  initial={isMain ? { opacity: 0, scale: 0.8 } : false}
+                  animate={isMain ? { opacity: 1, scale: 1 } : false}
+                  transition={{ delay: i * 0.08 }}
+                >
+                  <span className={`${isMain ? 'text-lg md:text-2xl' : 'text-xs'} font-black bg-gradient-to-r ${gradientClass} bg-clip-text text-transparent`}>
+                    {value}
+                  </span>
+                  <span className={`${isMain ? 'text-[10px] md:text-xs' : 'text-[5px]'} text-muted-foreground text-center mt-1 uppercase tracking-wide`}>{label}</span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== FEATURES GRID LAYOUT =====
+    if (slide.layout === 'features-grid') {
+      const featureIcons = ['🚀', '⚡', '🎯', '💎', '🔥', '✨'];
+      return (
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2`}>
+            {slide.icon && <span className={`${isMain ? 'text-xl' : 'text-xs'} bg-white/20 p-1 md:p-2 rounded-lg`}>{slide.icon}</span>}
+            <h3 className={`${size} font-bold text-white`}>{slide.title}</h3>
+          </div>
+          
+          {/* Features Grid */}
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 p-2 md:p-4">
+            {slide.content?.slice(0, 6).map((item, i) => (
+              <motion.div 
+                key={i} 
+                className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-white dark:bg-slate-800 rounded-xl shadow-lg border-l-4 border-primary"
+                initial={isMain ? { opacity: 0, x: -20 } : false}
+                animate={isMain ? { opacity: 1, x: 0 } : false}
+                transition={{ delay: i * 0.08 }}
+              >
+                <div className={`${isMain ? 'w-8 h-8 md:w-10 md:h-10' : 'w-4 h-4'} rounded-lg bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-md flex-shrink-0`}>
+                  <span className={`${isMain ? 'text-sm md:text-lg' : 'text-[6px]'}`}>{featureIcons[i] || '✨'}</span>
+                </div>
+                <span className={`${isMain ? 'text-xs md:text-sm' : 'text-[6px]'} text-foreground font-medium`}>{item}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ===== SECTION BREAK LAYOUT =====
+    if (slide.layout === 'section-break') {
+      return (
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} overflow-hidden`}>
+          {/* Large orb */}
+          <motion.div 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-80 md:h-80 rounded-full bg-white/10 blur-2xl"
+            animate={isMain ? { scale: [1, 1.2, 1] } : {}}
+            transition={{ duration: 4, repeat: Infinity }}
+          />
+          
+          {/* Content */}
+          <div className="relative h-full flex flex-col items-center justify-center p-4 md:p-12 text-center">
+            {/* Icon */}
+            {slide.icon && (
+              <motion.div 
+                className={`${isMain ? 'text-5xl md:text-7xl' : 'text-2xl'} mb-2 md:mb-6`}
+                animate={isMain ? { rotate: [0, 10, -10, 0] } : {}}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                {slide.icon}
+              </motion.div>
+            )}
+            
+            {/* Title */}
+            <h2 className={`${isMain ? 'text-2xl md:text-5xl' : 'text-sm'} font-black text-white tracking-wider uppercase`}>
+              {slide.title}
+            </h2>
+            
+            {/* Accent */}
+            <div className="w-12 md:w-24 h-1 bg-white/50 rounded-full mt-3 md:mt-6" />
           </div>
         </div>
       );
