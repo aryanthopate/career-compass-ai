@@ -18,87 +18,112 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are an elite presentation designer from a top creative agency. Your presentations win awards and go viral. You create CINEMATIC, BREATHTAKING slides that rival Apple keynotes.
+    const systemPrompt = `You are LEGENDARY presentation architect. Your work appears in TED talks, Apple keynotes, Fortune 500 boardrooms. You craft VISUAL STORIES that captivate and convert.
 
-Your response MUST be a valid JSON array of slide objects with this exact structure:
+RESPONSE FORMAT - Return ONLY valid JSON array:
 [
   {
     "slideNumber": 1,
-    "title": "Punchy Title (MAX 5 words)",
-    "subtitle": "One compelling line",
-    "content": ["Bullet 1 (5 words max)", "Bullet 2 (5 words max)"],
+    "title": "Impactful 3-5 word title",
+    "subtitle": "Supporting hook line",
+    "content": ["Point 1", "Point 2", "Point 3"],
     "notes": "Speaker notes",
-    "imagePrompt": "Vivid AI image description",
-    "layout": "title|content|image-left|image-right|quote|stats|timeline|comparison|spotlight|hero-statement|metrics-grid|features-grid|section-break",
-    "icon": "emoji"
+    "imagePrompt": "Detailed AI image description",
+    "layout": "one of the layout types below",
+    "icon": "relevant emoji",
+    "accentColor": "primary|secondary|accent|neon"
   }
 ]
 
-🎬 CINEMATIC DESIGN PHILOSOPHY:
-- Think Apple keynotes, TED talks, Netflix pitch decks
-- Every slide = ONE powerful idea
-- Less text = MORE impact
-- Visual storytelling > bullet points
-- Drama, tension, payoff
+🎬 PRESENTATION PHILOSOPHY:
+- ONE idea per slide, MAXIMUM impact
+- Think Netflix pitch deck meets Apple keynote
+- Every slide = potential viral screenshot
+- Tension → Insight → Resolution narrative arc
+- 70% visual, 30% text ratio
 
-📊 EXACT SLIDE COUNT: ${slideCount || 8} slides
+📊 EXACT SLIDES: ${slideCount || 8} slides
 
-🎭 PREMIUM SLIDE STRUCTURE:
-1. TITLE (layout: "title") - Cinematic opening, hero image worthy
-2. HOOK (layout: "spotlight" or "hero-statement") - Capture attention with bold statement
-3-${(slideCount || 8) - 2}. BODY - Strategic mix of ALL layout types
-${slideCount || 8}. CLOSE (layout: "title" or "hero-statement") - Memorable call-to-action
+🎭 MANDATORY STRUCTURE:
+1. OPENING: "title" or "magazine-hero" - Cinematic hook
+2. PROBLEM/HOOK: "spotlight" or "hero-statement" - Create tension
+3-${(slideCount || 8) - 2}. BODY: Strategic variety using ALL layouts
+${slideCount || 8}. CLOSING: "hero-statement" or "call-to-action" - Memorable finale
 
-📐 LAYOUT MASTERY (USE VARIETY):
-- "title" → Cinematic full-bleed openings/closings
-- "spotlight" → Single feature/concept with icon + 3 supporting points
-- "hero-statement" → BIG bold quote/stat centered, no bullets
-- "stats" → 2-4 impressive metrics (format: "Label: Value")
-- "metrics-grid" → 4-6 smaller metrics in grid (format: "Label: Value")  
-- "quote" → Testimonial or insight (item 1 = quote, item 2 = attribution)
-- "timeline" → 3-5 sequential steps
-- "comparison" → Before/after, old/new, us/them
+📐 LAYOUT MASTERY (use 8+ different types):
+
+HERO LAYOUTS:
+- "title" → Cinematic opener with dramatic background
+- "magazine-hero" → Editorial spread, bold typography + image
+- "hero-statement" → Single powerful quote/stat, centered
+- "section-break" → Transition between major sections
+
+DATA LAYOUTS:
+- "stats" → 3-4 BIG impressive metrics with context
+- "metrics-grid" → 6 smaller metrics in clean grid
+- "chart-story" → Single stat with narrative explanation
+- "progress-bars" → Visual progress/comparison bars
+
+CONTENT LAYOUTS:
+- "spotlight" → Feature focus with icon + 3 points
 - "features-grid" → 4-6 feature cards with icons
-- "section-break" → Transition slide between sections
-- "image-left" / "image-right" → Feature + visual
-- "content" → Standard bullets (LAST RESORT - use sparingly)
+- "content" → Standard bullet points (SPARINGLY)
+- "icon-list" → List with custom icons per point
 
-✍️ CONTENT RULES - BE RUTHLESS:
-- Titles: 3-5 words MAXIMUM, punchy verbs
-- Bullets: 5-7 words each, start with action verbs
-- Stats: Specific numbers, not vague (e.g., "147% Growth" not "Big Growth")
-- Quotes: Under 15 words, impactful
-- Timeline: 2-4 words per step
+COMPARISON LAYOUTS:
+- "comparison" → Side-by-side A vs B
+- "before-after" → Transformation story
+- "timeline" → 4-5 step process/journey
+
+VISUAL LAYOUTS:
+- "image-left" → Visual + text split
+- "image-right" → Text + visual split
+- "gallery" → Multiple images showcase
+- "quote" → Testimonial with attribution
+
+IMPACT LAYOUTS:
+- "call-to-action" → Bold CTA with button-style element
+- "key-takeaways" → Summary with numbered points
+- "agenda" → Roadmap/outline style
+
+✍️ CONTENT RULES:
+- Titles: 3-5 powerful words, active verbs
+- Bullets: 6-8 words max, action-oriented
+- Stats: SPECIFIC numbers (e.g., "2.4M users" not "millions")
+- Quotes: Under 15 words, profound
+- Timeline: 3-4 words per step
 
 ${includeImages ? `
-🖼️ IMAGE PROMPTS (ULTRA PREMIUM):
-- Style: "cinematic 3D render", "Apple-style product shot", "abstract holographic art", "dramatic studio lighting"
-- Always include: lighting, camera angle, color scheme matching ${colorScheme}
-- Examples: 
-  * "Cinematic 3D render of floating geometric shapes with holographic iridescent surface, dark background with blue-purple gradient, studio lighting, 4K"
-  * "Sleek minimal product floating in void, soft shadows, Apple-style photography, clean white background with subtle gradients"
-  * "Abstract flowing ribbons of light in ${colorScheme} colors, futuristic atmosphere, ultra high resolution"
-` : '- No image prompts needed'}
+🖼️ IMAGE PROMPTS - ULTRA PREMIUM:
+Create vivid, specific image descriptions for AI generation:
+- Style options: "3D isometric render", "abstract geometric art", "cinematic photography", "futuristic hologram", "minimalist illustration", "gradient mesh art"
+- Always specify: lighting, mood, color palette (${colorScheme || 'dark premium'})
+- Example: "Sleek 3D isometric render of floating data cubes with holographic glow, deep purple and cyan gradient, soft volumetric lighting, ultra-modern, 8K quality"
+` : ''}
 
-🎨 STYLE: ${style || 'Apple-inspired minimal luxury with bold typography'}
-🎨 COLORS: ${colorScheme || 'Dark mode with vibrant accent gradients'}
+🎨 STYLE: ${style || 'Premium agency presentation - dark mode elegance'}
+🎨 COLORS: ${colorScheme || 'Dark with vibrant accent gradients'}
 
-⚠️ CRITICAL: Return ONLY valid JSON array. No markdown. No explanations. VARY the layouts.`;
+⚠️ CRITICAL RULES:
+1. Return ONLY valid JSON array - no markdown, no explanations
+2. Use minimum 8 DIFFERENT layout types
+3. Every stat must be specific and impressive
+4. Vary slide density - some busy, some minimal
+5. Create narrative flow with emotional arc`;
 
-    const userPrompt = `Create an AWARD-WINNING presentation: "${prompt}"
+    const userPrompt = `Create an EXTRAORDINARY ${slideCount || 8}-slide presentation: "${prompt}"
 
-Requirements:
-- Looks like a $50,000 agency presentation
-- Mix at least 6 DIFFERENT layout types
-- Stats should be specific and impressive
-- Include spotlight, hero-statement, metrics-grid, or features-grid layouts
-- Every slide tells part of a compelling story
-- Image prompts should be cinematic and premium
-- Think: "Would this slide make someone say WOW?"
+Design Brief:
+- Agency-level quality ($100,000 pitch deck standard)
+- Strategic variety: Mix data slides, story slides, visual slides
+- Include: spotlight, metrics-grid, hero-statement, timeline layouts
+- Stats should be specific and believable
+- Each slide contributes to an overall narrative arc
+- Image prompts should be ultra-premium and specific
 
-Make it LEGENDARY!`;
+Make every slide a potential viral screenshot. GO LEGENDARY!`;
 
-    console.log('Generating presentation for prompt:', prompt);
+    console.log('Generating legendary presentation for:', prompt);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -112,7 +137,7 @@ Make it LEGENDARY!`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.7,
+        temperature: 0.8,
       }),
     });
 
@@ -147,7 +172,6 @@ Make it LEGENDARY!`;
       slides = JSON.parse(content);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      // Try to extract JSON array from the response
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         slides = JSON.parse(jsonMatch[0]);
@@ -156,12 +180,30 @@ Make it LEGENDARY!`;
       }
     }
 
+    // Validate and enhance slides
+    slides = slides.map((slide: any, index: number) => ({
+      ...slide,
+      slideNumber: index + 1,
+      layout: slide.layout || (index === 0 ? 'title' : 'content'),
+      icon: slide.icon || '✨',
+      accentColor: slide.accentColor || 'primary',
+    }));
+
     // Generate images if requested
     if (generateImages && includeImages) {
       console.log('Generating images for slides...');
       const slidesWithImages = await Promise.all(
         slides.map(async (slide: any, index: number) => {
-          if (slide.imagePrompt && (slide.layout === 'image-left' || slide.layout === 'image-right' || index === 0)) {
+          // Generate for image layouts and title slides
+          const shouldGenerateImage = slide.imagePrompt && (
+            slide.layout === 'image-left' || 
+            slide.layout === 'image-right' || 
+            slide.layout === 'magazine-hero' ||
+            slide.layout === 'gallery' ||
+            index === 0
+          );
+          
+          if (shouldGenerateImage) {
             try {
               console.log(`Generating image for slide ${index + 1}: ${slide.imagePrompt.substring(0, 50)}...`);
               
@@ -176,7 +218,7 @@ Make it LEGENDARY!`;
                   messages: [
                     { 
                       role: 'user', 
-                      content: `Generate a professional, high-quality presentation slide image: ${slide.imagePrompt}. Style: modern, clean, corporate, suitable for business presentations. Ultra high resolution.`
+                      content: `Generate an ultra-premium presentation visual: ${slide.imagePrompt}. Style: modern, sophisticated, suitable for Fortune 500 presentations. 16:9 aspect ratio, 4K quality.`
                     }
                   ],
                   modalities: ['image', 'text'],
@@ -202,6 +244,8 @@ Make it LEGENDARY!`;
       );
       slides = slidesWithImages;
     }
+
+    console.log(`Successfully generated ${slides.length} slides`);
 
     return new Response(JSON.stringify({ slides }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
