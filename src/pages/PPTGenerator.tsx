@@ -25,9 +25,10 @@ interface Slide {
   subtitle?: string;
   content: string[];
   notes?: string;
+  presenterNotes?: string;
   imagePrompt?: string;
   generatedImage?: string;
-  layout: 'title' | 'content' | 'two-column' | 'image-left' | 'image-right' | 'quote' | 'stats' | 'timeline' | 'comparison' | 'spotlight' | 'hero-statement' | 'metrics-grid' | 'features-grid' | 'section-break' | 'magazine-hero' | 'chart-story' | 'progress-bars' | 'icon-list' | 'before-after' | 'gallery' | 'call-to-action' | 'key-takeaways' | 'agenda';
+  layout: 'title' | 'content' | 'two-column' | 'image-left' | 'image-right' | 'quote' | 'stats' | 'timeline' | 'comparison' | 'spotlight' | 'hero-statement' | 'metrics-grid' | 'features-grid' | 'section-break' | 'magazine-hero' | 'chart-story' | 'progress-bars' | 'icon-list' | 'before-after' | 'gallery' | 'call-to-action' | 'key-takeaways' | 'agenda' | 'mixed-left' | 'mixed-right' | 'stats-visual' | 'features-visual' | 'timeline-visual' | 'comparison-visual' | 'quote-visual' | 'spotlight-visual' | 'takeaways-visual' | 'cta-visual';
   accentColor?: string;
   icon?: string;
 }
@@ -484,8 +485,8 @@ export default function PPTGenerator() {
             pptSlide.addText(`— ${slide.content[1]}`, { x: 1.5, y: 4.15, w: 6, h: 0.4, fontSize: 14, color: colors.glow, bold: true });
           }
           
-        } else if (slide.layout === 'image-left' || slide.layout === 'image-right') {
-          // ===== IMAGE LAYOUTS =====
+        } else if (slide.layout === 'image-left' || slide.layout === 'image-right' || slide.layout === 'mixed-left' || slide.layout === 'mixed-right') {
+          // ===== MIXED CONTENT LAYOUTS (Image + Text) =====
           pptSlide.background = { color: 'F8FAFC' };
           
           // Header
@@ -499,23 +500,26 @@ export default function PPTGenerator() {
           }
           pptSlide.addText(slide.title, { x: 1.3, y: 0.4, w: 7, h: 0.7, fontSize: 28, bold: true, color: 'FFFFFF' });
           
-          const imageX = slide.layout === 'image-left' ? 0.3 : 5.2;
-          const textX = slide.layout === 'image-left' ? 4.9 : 0.3;
+          const isImageLeft = slide.layout === 'image-left' || slide.layout === 'mixed-left';
+          const imageX = isImageLeft ? 0.3 : 5.2;
+          const textX = isImageLeft ? 4.9 : 0.3;
           
-          // Image frame
+          // Image frame with glow effect
+          pptSlide.addShape('roundRect', { x: imageX - 0.1, y: 1.5, w: 4.7, h: 3.4, fill: { type: 'solid', color: colors.glow }, rectRadius: 0.18 });
           pptSlide.addShape('roundRect', { x: imageX - 0.05, y: 1.55, w: 4.6, h: 3.3, fill: { type: 'solid', color: colors.primary }, rectRadius: 0.15 });
-          pptSlide.addShape('roundRect', { x: imageX, y: 1.6, w: 4.5, h: 3.2, fill: { type: 'solid', color: colors.surface }, rectRadius: 0.1 });
           
           if (slide.generatedImage) {
-            pptSlide.addImage({ data: slide.generatedImage, x: imageX + 0.05, y: 1.65, w: 4.4, h: 3.1 });
+            pptSlide.addImage({ data: slide.generatedImage, x: imageX, y: 1.6, w: 4.5, h: 3.2, rounding: true });
           } else {
+            pptSlide.addShape('roundRect', { x: imageX, y: 1.6, w: 4.5, h: 3.2, fill: { type: 'solid', color: colors.surface }, rectRadius: 0.1 });
             pptSlide.addText('🖼️', { x: imageX, y: 2.8, w: 4.5, h: 1, fontSize: 48, align: 'center', color: colors.glow });
           }
           
-          // Content
+          // Content with professional styling
           slide.content?.forEach((item, i) => {
-            pptSlide.addShape('rect', { x: textX, y: 1.75 + (i * 0.7), w: 0.2, h: 0.06, fill: { type: 'solid', color: colors.primary } });
-            pptSlide.addText(item, { x: textX + 0.35, y: 1.65 + (i * 0.7), w: 4.2, h: 0.6, fontSize: 14, color: '334155' });
+            pptSlide.addShape('roundRect', { x: textX, y: 1.65 + (i * 0.75), w: 4.5, h: 0.65, fill: { type: 'solid', color: 'FFFFFF' }, rectRadius: 0.08, shadow: { type: 'outer', blur: 6, offset: 2, angle: 45, color: '000000', opacity: 0.05 } });
+            pptSlide.addShape('rect', { x: textX, y: 1.65 + (i * 0.75), w: 0.08, h: 0.65, fill: { type: 'solid', color: colors.primary } });
+            pptSlide.addText(item, { x: textX + 0.2, y: 1.7 + (i * 0.75), w: 4.1, h: 0.55, fontSize: 13, color: '334155' });
           });
           
         } else if (slide.layout === 'section-break') {
@@ -564,11 +568,17 @@ export default function PPTGenerator() {
             pptSlide.addText(item, { x: 1, y: 1.6 + (i * 0.65), w: 8.5, h: 0.5, fontSize: 14, color: '334155' });
           });
         }
+        
+        // Add presenter notes to every slide
+        const notes = slide.presenterNotes || slide.notes || '';
+        if (notes) {
+          pptSlide.addNotes(notes);
+        }
       });
 
       const fileName = `${slides[0]?.title?.replace(/[^a-zA-Z0-9]/g, '_') || 'presentation'}_${Date.now()}.pptx`;
       await pptx.writeFile({ fileName });
-      toast.success('🎉 Presentation downloaded!');
+      toast.success('🎉 Presentation with speaker notes downloaded!');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download presentation');
@@ -1025,9 +1035,9 @@ export default function PPTGenerator() {
       );
     }
 
-    // ===== IMAGE LAYOUTS =====
-    if (slide.layout === 'image-left' || slide.layout === 'image-right') {
-      const imageFirst = slide.layout === 'image-left';
+    // ===== MIXED CONTENT LAYOUTS (Image + Text) =====
+    if (slide.layout === 'image-left' || slide.layout === 'image-right' || slide.layout === 'mixed-left' || slide.layout === 'mixed-right') {
+      const imageFirst = slide.layout === 'image-left' || slide.layout === 'mixed-left';
       return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
           <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2 relative overflow-hidden`}>
@@ -1036,13 +1046,19 @@ export default function PPTGenerator() {
             <h3 className={`${size} font-bold text-white relative z-10`}>{slide.title}</h3>
           </div>
           
-          <div className={`flex-1 grid grid-cols-2 gap-2 md:gap-4 p-2 md:p-4 ${!imageFirst ? 'direction-rtl' : ''}`}>
+          <div className={`flex-1 grid grid-cols-2 gap-2 md:gap-4 p-2 md:p-4`}>
             {/* Image */}
-            <div className={`${imageFirst ? 'order-1' : 'order-2'} bg-gradient-to-br ${gradientClass} rounded-xl overflow-hidden shadow-xl flex items-center justify-center`}>
+            <div className={`${imageFirst ? 'order-1' : 'order-2'} relative rounded-xl overflow-hidden shadow-xl`}>
+              <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-20`} />
               {slide.generatedImage ? (
-                <img src={slide.generatedImage} alt="" className="w-full h-full object-cover" />
+                <img src={slide.generatedImage} alt="" className="w-full h-full object-cover relative z-10" />
               ) : (
-                <ImagePlus className={`${isMain ? 'w-12 h-12' : 'w-4 h-4'} text-white/40`} />
+                <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
+                  <div className="text-center">
+                    <ImagePlus className={`${isMain ? 'w-10 h-10' : 'w-4 h-4'} text-white/60 mx-auto mb-2`} />
+                    <span className={`${isMain ? 'text-xs' : 'text-[4px]'} text-white/40`}>AI Image</span>
+                  </div>
+                </div>
               )}
             </div>
             
@@ -1051,12 +1067,14 @@ export default function PPTGenerator() {
               {slide.content?.map((item, i) => (
                 <motion.div
                   key={i}
-                  className="flex items-start gap-1 md:gap-2 p-1.5 md:p-2 bg-white dark:bg-slate-800 rounded-lg shadow"
+                  className="flex items-start gap-1 md:gap-2 p-1.5 md:p-2 bg-white dark:bg-slate-800 rounded-lg shadow border-l-2 border-primary"
                   initial={isMain ? { opacity: 0, x: imageFirst ? 20 : -20 } : false}
                   animate={isMain ? { opacity: 1, x: 0 } : false}
                   transition={{ delay: i * 0.1 }}
                 >
-                  <div className={`${isMain ? 'w-1.5 h-1.5 mt-1.5' : 'w-0.5 h-0.5 mt-0.5'} rounded-full bg-primary flex-shrink-0`} />
+                  <div className={`${isMain ? 'w-5 h-5 text-[10px]' : 'w-2 h-2 text-[4px]'} rounded-full bg-gradient-to-br ${gradientClass} flex items-center justify-center text-white font-bold flex-shrink-0`}>
+                    {i + 1}
+                  </div>
                   <span className={contentSize}>{item}</span>
                 </motion.div>
               ))}
@@ -1501,6 +1519,19 @@ export default function PPTGenerator() {
                           </motion.div>
                         </AnimatePresence>
                       </div>
+                      
+                      {/* Presenter Notes Section */}
+                      {slides[currentSlide]?.presenterNotes && (
+                        <div className="p-4 bg-gradient-to-r from-primary/5 to-accent/5 border-t border-border/50">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Type className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-semibold text-primary">Speaker Notes</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed max-h-20 overflow-y-auto">
+                            {slides[currentSlide].presenterNotes}
+                          </p>
+                        </div>
+                      )}
                       
                       {/* Navigation */}
                       <div className="p-4 flex items-center justify-between border-t border-border/50">
