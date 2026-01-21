@@ -485,11 +485,14 @@ export default function PPTGenerator() {
             pptSlide.addText(`— ${slide.content[1]}`, { x: 1.5, y: 4.15, w: 6, h: 0.4, fontSize: 14, color: colors.glow, bold: true });
           }
           
-        } else if (slide.layout === 'image-left' || slide.layout === 'image-right' || slide.layout === 'mixed-left' || slide.layout === 'mixed-right') {
-          // ===== MIXED CONTENT LAYOUTS (Image + Text) =====
+        } else if (slide.layout === 'image-left' || slide.layout === 'image-right' || slide.layout === 'mixed-left' || slide.layout === 'mixed-right' || 
+                   slide.layout === 'stats-visual' || slide.layout === 'features-visual' || slide.layout === 'timeline-visual' ||
+                   slide.layout === 'comparison-visual' || slide.layout === 'quote-visual' || slide.layout === 'spotlight-visual' ||
+                   slide.layout === 'takeaways-visual' || slide.layout === 'cta-visual') {
+          // ===== MIXED CONTENT LAYOUTS (Image + Text on same slide) =====
           pptSlide.background = { color: 'F8FAFC' };
           
-          // Header
+          // Header bar
           pptSlide.addShape('rect', { x: 0, y: 0, w: '100%', h: 1.3, fill: { type: 'solid', color: colors.dark } });
           pptSlide.addShape('ellipse', { x: 8, y: -0.8, w: 2.5, h: 2.5, fill: { type: 'solid', color: colors.primary } });
           pptSlide.addShape('rect', { x: 0, y: 1.3, w: 0.06, h: 4.2, fill: { type: 'solid', color: colors.neon } });
@@ -500,27 +503,59 @@ export default function PPTGenerator() {
           }
           pptSlide.addText(slide.title, { x: 1.3, y: 0.4, w: 7, h: 0.7, fontSize: 28, bold: true, color: 'FFFFFF' });
           
-          const isImageLeft = slide.layout === 'image-left' || slide.layout === 'mixed-left';
+          // Layout variations
+          const isImageLeft = slide.layout === 'image-left' || slide.layout === 'mixed-left' || 
+                             slide.layout === 'quote-visual' || slide.layout === 'spotlight-visual';
           const imageX = isImageLeft ? 0.3 : 5.2;
           const textX = isImageLeft ? 4.9 : 0.3;
+          const imageW = 4.5;
+          const imageH = 3.2;
           
           // Image frame with glow effect
-          pptSlide.addShape('roundRect', { x: imageX - 0.1, y: 1.5, w: 4.7, h: 3.4, fill: { type: 'solid', color: colors.glow }, rectRadius: 0.18 });
-          pptSlide.addShape('roundRect', { x: imageX - 0.05, y: 1.55, w: 4.6, h: 3.3, fill: { type: 'solid', color: colors.primary }, rectRadius: 0.15 });
+          pptSlide.addShape('roundRect', { x: imageX - 0.1, y: 1.5, w: imageW + 0.2, h: imageH + 0.2, fill: { type: 'solid', color: colors.glow }, rectRadius: 0.18 });
+          pptSlide.addShape('roundRect', { x: imageX - 0.05, y: 1.55, w: imageW + 0.1, h: imageH + 0.1, fill: { type: 'solid', color: colors.primary }, rectRadius: 0.15 });
           
           if (slide.generatedImage) {
-            pptSlide.addImage({ data: slide.generatedImage, x: imageX, y: 1.6, w: 4.5, h: 3.2, rounding: true });
+            pptSlide.addImage({ data: slide.generatedImage, x: imageX, y: 1.6, w: imageW, h: imageH, rounding: true });
           } else {
-            pptSlide.addShape('roundRect', { x: imageX, y: 1.6, w: 4.5, h: 3.2, fill: { type: 'solid', color: colors.surface }, rectRadius: 0.1 });
-            pptSlide.addText('🖼️', { x: imageX, y: 2.8, w: 4.5, h: 1, fontSize: 48, align: 'center', color: colors.glow });
+            pptSlide.addShape('roundRect', { x: imageX, y: 1.6, w: imageW, h: imageH, fill: { type: 'solid', color: colors.surface }, rectRadius: 0.1 });
+            pptSlide.addText('🖼️', { x: imageX, y: 2.8, w: imageW, h: 1, fontSize: 48, align: 'center', color: colors.glow });
           }
           
-          // Content with professional styling
-          slide.content?.forEach((item, i) => {
-            pptSlide.addShape('roundRect', { x: textX, y: 1.65 + (i * 0.75), w: 4.5, h: 0.65, fill: { type: 'solid', color: 'FFFFFF' }, rectRadius: 0.08, shadow: { type: 'outer', blur: 6, offset: 2, angle: 45, color: '000000', opacity: 0.05 } });
-            pptSlide.addShape('rect', { x: textX, y: 1.65 + (i * 0.75), w: 0.08, h: 0.65, fill: { type: 'solid', color: colors.primary } });
-            pptSlide.addText(item, { x: textX + 0.2, y: 1.7 + (i * 0.75), w: 4.1, h: 0.55, fontSize: 13, color: '334155' });
-          });
+          // Content with professional styling - varies by layout type
+          if (slide.layout === 'stats-visual' || slide.layout === 'takeaways-visual') {
+            // Stats/Takeaways: Larger text with emphasis
+            slide.content?.slice(0, 4).forEach((item, i) => {
+              const [label, value] = item.split(':').map((s: string) => s.trim());
+              pptSlide.addShape('roundRect', { x: textX, y: 1.6 + (i * 0.8), w: 4.5, h: 0.7, fill: { type: 'solid', color: 'FFFFFF' }, rectRadius: 0.1, shadow: { type: 'outer', blur: 6, offset: 2, angle: 45, color: '000000', opacity: 0.06 } });
+              pptSlide.addShape('rect', { x: textX, y: 1.6 + (i * 0.8), w: 0.1, h: 0.7, fill: { type: 'solid', color: colors.primary } });
+              if (value) {
+                pptSlide.addText(value, { x: textX + 0.2, y: 1.6 + (i * 0.8), w: 2, h: 0.35, fontSize: 18, bold: true, color: colors.dark });
+                pptSlide.addText(label, { x: textX + 0.2, y: 1.95 + (i * 0.8), w: 4.1, h: 0.3, fontSize: 10, color: colors.muted });
+              } else {
+                pptSlide.addText(item, { x: textX + 0.2, y: 1.7 + (i * 0.8), w: 4.1, h: 0.5, fontSize: 14, color: '334155' });
+              }
+            });
+          } else if (slide.layout === 'cta-visual') {
+            // CTA: Bold action-oriented
+            slide.content?.slice(0, 3).forEach((item, i) => {
+              if (i === 0) {
+                // Main CTA button
+                pptSlide.addShape('roundRect', { x: textX, y: 2.2, w: 4.5, h: 0.8, fill: { type: 'solid', color: colors.primary }, rectRadius: 0.4 });
+                pptSlide.addText(item, { x: textX, y: 2.2, w: 4.5, h: 0.8, fontSize: 18, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle' });
+              } else {
+                pptSlide.addShape('roundRect', { x: textX, y: 2.8 + ((i - 1) * 0.6), w: 4.5, h: 0.5, fill: { type: 'solid', color: 'FFFFFF' }, rectRadius: 0.08 });
+                pptSlide.addText(item, { x: textX + 0.2, y: 2.85 + ((i - 1) * 0.6), w: 4.1, h: 0.4, fontSize: 12, color: '334155' });
+              }
+            });
+          } else {
+            // Standard mixed content styling
+            slide.content?.forEach((item, i) => {
+              pptSlide.addShape('roundRect', { x: textX, y: 1.65 + (i * 0.75), w: 4.5, h: 0.65, fill: { type: 'solid', color: 'FFFFFF' }, rectRadius: 0.08, shadow: { type: 'outer', blur: 6, offset: 2, angle: 45, color: '000000', opacity: 0.05 } });
+              pptSlide.addShape('rect', { x: textX, y: 1.65 + (i * 0.75), w: 0.08, h: 0.65, fill: { type: 'solid', color: colors.primary } });
+              pptSlide.addText(item, { x: textX + 0.2, y: 1.7 + (i * 0.75), w: 4.1, h: 0.55, fontSize: 13, color: '334155' });
+            });
+          }
           
         } else if (slide.layout === 'section-break') {
           // ===== SECTION BREAK =====
@@ -1036,8 +1071,14 @@ export default function PPTGenerator() {
     }
 
     // ===== MIXED CONTENT LAYOUTS (Image + Text) =====
-    if (slide.layout === 'image-left' || slide.layout === 'image-right' || slide.layout === 'mixed-left' || slide.layout === 'mixed-right') {
-      const imageFirst = slide.layout === 'image-left' || slide.layout === 'mixed-left';
+    // Handles: image-left, image-right, mixed-left, mixed-right, stats-visual, features-visual, 
+    // timeline-visual, comparison-visual, quote-visual, spotlight-visual, takeaways-visual, cta-visual
+    if (slide.layout === 'image-left' || slide.layout === 'image-right' || slide.layout === 'mixed-left' || slide.layout === 'mixed-right' ||
+        slide.layout === 'stats-visual' || slide.layout === 'features-visual' || slide.layout === 'timeline-visual' ||
+        slide.layout === 'comparison-visual' || slide.layout === 'quote-visual' || slide.layout === 'spotlight-visual' ||
+        slide.layout === 'takeaways-visual' || slide.layout === 'cta-visual') {
+      const imageFirst = slide.layout === 'image-left' || slide.layout === 'mixed-left' || 
+                         slide.layout === 'quote-visual' || slide.layout === 'spotlight-visual';
       return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
           <div className={`bg-gradient-to-r ${gradientClass} p-2 md:p-4 flex items-center gap-2 relative overflow-hidden`}>
@@ -1047,13 +1088,13 @@ export default function PPTGenerator() {
           </div>
           
           <div className={`flex-1 grid grid-cols-2 gap-2 md:gap-4 p-2 md:p-4`}>
-            {/* Image */}
+            {/* Image Panel */}
             <div className={`${imageFirst ? 'order-1' : 'order-2'} relative rounded-xl overflow-hidden shadow-xl`}>
               <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-20`} />
               {slide.generatedImage ? (
                 <img src={slide.generatedImage} alt="" className="w-full h-full object-cover relative z-10" />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
+                <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center min-h-[120px]`}>
                   <div className="text-center">
                     <ImagePlus className={`${isMain ? 'w-10 h-10' : 'w-4 h-4'} text-white/60 mx-auto mb-2`} />
                     <span className={`${isMain ? 'text-xs' : 'text-[4px]'} text-white/40`}>AI Image</span>
@@ -1062,22 +1103,79 @@ export default function PPTGenerator() {
               )}
             </div>
             
-            {/* Content */}
+            {/* Content Panel - varies by layout type */}
             <div className={`${imageFirst ? 'order-2' : 'order-1'} flex flex-col justify-center space-y-1 md:space-y-2`}>
-              {slide.content?.map((item, i) => (
-                <motion.div
-                  key={i}
-                  className="flex items-start gap-1 md:gap-2 p-1.5 md:p-2 bg-white dark:bg-slate-800 rounded-lg shadow border-l-2 border-primary"
-                  initial={isMain ? { opacity: 0, x: imageFirst ? 20 : -20 } : false}
-                  animate={isMain ? { opacity: 1, x: 0 } : false}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <div className={`${isMain ? 'w-5 h-5 text-[10px]' : 'w-2 h-2 text-[4px]'} rounded-full bg-gradient-to-br ${gradientClass} flex items-center justify-center text-white font-bold flex-shrink-0`}>
-                    {i + 1}
-                  </div>
-                  <span className={contentSize}>{item}</span>
-                </motion.div>
-              ))}
+              {slide.layout === 'stats-visual' || slide.layout === 'takeaways-visual' ? (
+                // Stats/Takeaways: Larger text with emphasis on values
+                slide.content?.slice(0, 4).map((item, i) => {
+                  const [label, value] = item.split(':').map((s: string) => s.trim());
+                  return (
+                    <motion.div
+                      key={i}
+                      className="p-1.5 md:p-2 bg-white dark:bg-slate-800 rounded-lg shadow border-l-2 border-primary"
+                      initial={isMain ? { opacity: 0, x: imageFirst ? 20 : -20 } : false}
+                      animate={isMain ? { opacity: 1, x: 0 } : false}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      {value ? (
+                        <>
+                          <span className={`${isMain ? 'text-lg md:text-xl font-bold' : 'text-[8px] font-bold'} bg-gradient-to-r ${gradientClass} bg-clip-text text-transparent block`}>
+                            {value}
+                          </span>
+                          <span className={`${isMain ? 'text-[10px] md:text-xs' : 'text-[5px]'} text-muted-foreground`}>
+                            {label}
+                          </span>
+                        </>
+                      ) : (
+                        <span className={contentSize}>{item}</span>
+                      )}
+                    </motion.div>
+                  );
+                })
+              ) : slide.layout === 'cta-visual' ? (
+                // CTA: Bold action-oriented styling
+                <div className="flex flex-col items-center justify-center h-full space-y-2 md:space-y-3">
+                  {slide.content?.[0] && (
+                    <motion.div
+                      className={`px-4 md:px-8 py-2 md:py-3 rounded-full bg-gradient-to-r ${gradientClass} shadow-lg`}
+                      initial={isMain ? { opacity: 0, scale: 0.8 } : false}
+                      animate={isMain ? { opacity: 1, scale: 1 } : false}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <span className={`${isMain ? 'text-sm md:text-lg font-bold' : 'text-[6px] font-bold'} text-white`}>
+                        {slide.content[0]}
+                      </span>
+                    </motion.div>
+                  )}
+                  {slide.content?.slice(1).map((item, i) => (
+                    <motion.div
+                      key={i}
+                      className={`${isMain ? 'text-xs md:text-sm' : 'text-[5px]'} text-muted-foreground text-center`}
+                      initial={isMain ? { opacity: 0, y: 10 } : false}
+                      animate={isMain ? { opacity: 1, y: 0 } : false}
+                      transition={{ delay: (i + 1) * 0.1 }}
+                    >
+                      {item}
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                // Standard mixed content
+                slide.content?.map((item, i) => (
+                  <motion.div
+                    key={i}
+                    className="flex items-start gap-1 md:gap-2 p-1.5 md:p-2 bg-white dark:bg-slate-800 rounded-lg shadow border-l-2 border-primary"
+                    initial={isMain ? { opacity: 0, x: imageFirst ? 20 : -20 } : false}
+                    animate={isMain ? { opacity: 1, x: 0 } : false}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <div className={`${isMain ? 'w-5 h-5 text-[10px]' : 'w-2 h-2 text-[4px]'} rounded-full bg-gradient-to-br ${gradientClass} flex items-center justify-center text-white font-bold flex-shrink-0`}>
+                      {i + 1}
+                    </div>
+                    <span className={contentSize}>{item}</span>
+                  </motion.div>
+                ))
+              )}
             </div>
           </div>
         </div>
